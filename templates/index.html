@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoilSense — Multimodal Crop & Soil Recommendation</title>
+  <style>
+    /* ── Variables ─────────────────────────────────── */
+    :root {
+      --green-900: #1b4332;
+      --green-800: #2d6a4f;
+      --green-700: #40916c;
+      --green-600: #52b788;
+      --green-300: #95d5b2;
+      --green-100: #d8f3dc;
+      --green-50:  #f0faf3;
+      --earth:     #7c5c3a;
+      --earth-light: #c9a97a;
+      --sand:      #faf6ef;
+      --white:     #ffffff;
+      --gray-100:  #f4f4f5;
+      --gray-200:  #e4e4e7;
+      --gray-400:  #a1a1aa;
+      --gray-600:  #52525b;
+      --gray-800:  #27272a;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.05);
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    /* ── Reset ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--sand);
+      color: var(--gray-800);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, var(--green-900) 0%, var(--green-800) 60%, var(--green-700) 100%);
+      color: white;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .header-left { display: flex; align-items: center; gap: .9rem; }
+    .header-icon {
+      width: 48px; height: 48px; background: rgba(255,255,255,.15);
+      border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; font-size: 1.7rem;
+    }
+    .header-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -.3px; }
+    .header-sub   { font-size: .8rem; color: var(--green-300); margin-top: 2px; }
+    .accuracy-badge {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      padding: .35rem .85rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .accuracy-badge span { color: #a3e635; }
+
+    /* ── Main layout ───────────────────────────────── */
+    main { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ──────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(90deg, var(--green-50), var(--white));
+      border-bottom: 1px solid var(--green-100);
+      padding: 1rem 1.4rem;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .card-header-icon { font-size: 1.2rem; }
+    .card-header h2  { font-size: 1rem; font-weight: 600; color: var(--green-800); }
+    .card-body { padding: 1.4rem; }
+
+    /* ── Image upload ──────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--green-300);
+      border-radius: var(--radius);
+      background: var(--green-50);
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--green-700);
+      background: #e8f5ed;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+    .drop-text { font-size: .9rem; color: var(--gray-600); }
+    .drop-hint { font-size: .75rem; color: var(--gray-400); margin-top: .25rem; }
+    .preview-wrap {
+      display: none;
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: .75rem;
+    }
+    .preview-wrap img {
+      width: 100%; max-height: 200px;
+      object-fit: cover; border-radius: var(--radius);
+    }
+    .preview-clear {
+      position: absolute; top: .5rem; right: .5rem;
+      background: rgba(0,0,0,.55); color: white;
+      border: none; border-radius: 50%;
+      width: 28px; height: 28px; font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Section label ─────────────────────────────── */
+    .section-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: 1px;
+      color: var(--green-700); text-transform: uppercase;
+      margin: 1.2rem 0 .6rem;
+    }
+
+    /* ── Numeric inputs grid ───────────────────────── */
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .75rem;
+    }
+    @media (max-width: 480px) { .inputs-grid { grid-template-columns: 1fr 1fr; } }
+
+    .field {
+      display: flex; flex-direction: column; gap: .3rem;
+    }
+    .field label {
+      font-size: .72rem; font-weight: 600;
+      color: var(--gray-600); display: flex; justify-content: space-between;
+    }
+    .field label span { color: var(--gray-400); font-weight: 400; }
+    .field input, .field select {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: .45rem .65rem;
+      font-size: .85rem;
+      color: var(--gray-800);
+      background: var(--white);
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--green-600);
+      box-shadow: 0 0 0 3px rgba(64,145,108,.12);
+    }
+
+    /* ── Dropdowns grid ────────────────────────────── */
+    .dropdowns-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .75rem;
+    }
+
+    /* ── Submit button ─────────────────────────────── */
+    .submit-btn {
+      width: 100%;
+      margin-top: 1.4rem;
+      padding: .85rem 2rem;
+      background: linear-gradient(135deg, var(--green-800), var(--green-700));
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      transition: all .2s;
+      box-shadow: 0 4px 12px rgba(45,106,79,.35);
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(45,106,79,.45);
+    }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+    /* ── Loading overlay ───────────────────────────── */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(27,67,50,.65);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 1000; backdrop-filter: blur(4px);
+    }
+    .loading-overlay.hidden { display: none; }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid rgba(255,255,255,.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    .loading-text { color: white; margin-top: 1rem; font-size: .95rem; font-weight: 500; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results placeholder ───────────────────────── */
+    .results-placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3.5rem 2rem; text-align: center;
+      color: var(--gray-400);
+    }
+    .results-placeholder .ph-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: .5; }
+    .results-placeholder p { font-size: .9rem; }
+
+    /* ── Soil result card ──────────────────────────── */
+    #resultsContent { display: none; }
+
+    .soil-result {
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .soil-banner {
+      padding: 1.2rem 1.4rem;
+      color: white;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .soil-icon-big { font-size: 2.8rem; }
+    .soil-name-wrap .soil-label { font-size: .7rem; opacity: .8; letter-spacing: 1px; text-transform: uppercase; }
+    .soil-name-wrap .soil-name  { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+    .conf-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,.2);
+      border-radius: 999px;
+      padding: .4rem 1rem;
+      text-align: center;
+    }
+    .conf-badge .conf-val  { font-size: 1.4rem; font-weight: 700; }
+    .conf-badge .conf-text { font-size: .65rem; opacity: .8; }
+
+    /* Probability bars */
+    .prob-section { padding: 1rem 1.4rem; }
+    .prob-section h3 { font-size: .7rem; font-weight: 700; color: var(--gray-600);
+                       letter-spacing: 1px; text-transform: uppercase; margin-bottom: .75rem; }
+    .prob-row {
+      display: flex; align-items: center; gap: .6rem;
+      margin-bottom: .45rem; font-size: .8rem;
+    }
+    .prob-name { width: 110px; flex-shrink: 0; color: var(--gray-600); font-size: .75rem; }
+    .prob-bar  { flex: 1; height: 8px; background: var(--gray-100); border-radius: 999px; overflow: hidden; }
+    .prob-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+    .prob-pct  { width: 40px; text-align: right; font-weight: 600; font-size: .75rem; }
+
+    /* ── Crop cards ────────────────────────────────── */
+    .crops-section { margin-bottom: 1rem; }
+    .crops-section h3 {
+      font-size: .7rem; font-weight: 700; color: var(--green-700);
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: .75rem;
+    }
+    .crop-cards { display: flex; flex-direction: column; gap: .6rem; }
+    .crop-card {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: .85rem 1rem;
+      display: flex; align-items: center; gap: .8rem;
+      transition: border-color .15s;
+    }
+    .crop-card.rank-1 { border-color: var(--green-300); background: var(--green-50); }
+    .crop-card.rank-2 { border-color: #d1fae5; }
+    .crop-card.rank-3 { border-color: var(--gray-200); }
+    .crop-emoji { font-size: 2rem; line-height: 1; }
+    .crop-info  { flex: 1; }
+    .crop-name  { font-weight: 600; font-size: .95rem; color: var(--gray-800); }
+    .crop-fert  { font-size: .72rem; color: var(--gray-600); margin-top: .15rem; }
+    .crop-npk   { font-size: .68rem; color: var(--gray-400); }
+    .crop-rank  { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+    .stars      { font-size: .85rem; letter-spacing: 1px; color: #f59e0b; }
+    .rank-label { font-size: .62rem; color: var(--gray-400); font-weight: 600; }
+
+    /* ── Fertilizer card ───────────────────────────── */
+    .fert-card {
+      background: linear-gradient(135deg, var(--earth) 0%, #a06840 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      display: flex; align-items: flex-start; gap: .8rem;
+    }
+    .fert-icon { font-size: 2rem; flex-shrink: 0; }
+    .fert-label { font-size: .65rem; opacity: .75; letter-spacing: 1px; text-transform: uppercase; }
+    .fert-name  { font-size: 1rem; font-weight: 700; margin: .1rem 0; }
+    .fert-npk   { font-size: .8rem; opacity: .85; }
+
+    /* ── Error banner ──────────────────────────────── */
+    .error-banner {
+      background: #fef2f2; border: 1px solid #fca5a5;
+      border-radius: var(--radius-sm); padding: 1rem 1.2rem;
+      color: #991b1b; font-size: .85rem;
+    }
+
+    /* ── Soil banner colours ───────────────────────── */
+    .soil-alluvial  { background: linear-gradient(135deg, #7c6f52, #a08c6a); }
+    .soil-black     { background: linear-gradient(135deg, #2d2d2d, #4a4a4a); }
+    .soil-clay      { background: linear-gradient(135deg, #7a4f38, #a06848); }
+    .soil-laterite  { background: linear-gradient(135deg, #8b3a20, #b05030); }
+    .soil-red       { background: linear-gradient(135deg, #9b1c1c, #c53030); }
+    .soil-yellow    { background: linear-gradient(135deg, #856404, #b28a0a); }
+  </style>
+</head>
+
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <div class="header-icon">🌱</div>
+    <div>
+      <div class="header-title">SoilSense</div>
+      <div class="header-sub">Multimodal Crop &amp; Soil Recommendation System</div>
+    </div>
+  </div>
+  <div class="accuracy-badge">Accuracy: <span>98.67%</span></div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<main>
+  <div class="grid">
+
+    <!-- ── INPUT PANEL ─────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🔬</span>
+        <h2>Soil Analysis Inputs</h2>
+      </div>
+      <div class="card-body">
+
+        <!-- Image upload -->
+        <div class="section-label">Soil Image</div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="imageInput" accept="image/*" />
+          <div class="drop-icon">📷</div>
+          <div class="drop-text">Drag &amp; drop your soil photo here</div>
+          <div class="drop-hint">or click to browse — JPEG, PNG supported</div>
+        </div>
+        <div class="preview-wrap" id="previewWrap">
+          <img id="previewImg" src="" alt="Soil preview" />
+          <button class="preview-clear" id="clearImg" title="Remove image">✕</button>
+        </div>
+
+        <!-- Numeric parameters -->
+        <div class="section-label">Soil &amp; Climate Parameters</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label>Nitrogen (N) <span>0–200</span></label>
+            <input type="number" id="n" name="n" placeholder="e.g. 90" min="0" max="200" step="0.1" value="90" />
+          </div>
+          <div class="field">
+            <label>Phosphorus (P) <span>0–200</span></label>
+            <input type="number" id="p" name="p" placeholder="e.g. 42" min="0" max="200" step="0.1" value="42" />
+          </div>
+          <div class="field">
+            <label>Potassium (K) <span>0–200</span></label>
+            <input type="number" id="k" name="k" placeholder="e.g. 43" min="0" max="200" step="0.1" value="43" />
+          </div>
+          <div class="field">
+            <label>Temperature <span>0–50 °C</span></label>
+            <input type="number" id="temp" name="temp" placeholder="e.g. 25" min="0" max="50" step="0.1" value="25" />
+          </div>
+          <div class="field">
+            <label>Humidity <span>0–100 %</span></label>
+            <input type="number" id="humidity" name="humidity" placeholder="e.g. 80" min="0" max="100" step="0.1" value="80" />
+          </div>
+          <div class="field">
+            <label>Rainfall <span>0–3000 mm</span></label>
+            <input type="number" id="rainfall" name="rainfall" placeholder="e.g. 200" min="0" max="3000" step="1" value="200" />
+          </div>
+          <div class="field">
+            <label>Soil pH <span>3–10</span></label>
+            <input type="number" id="ph" name="ph" placeholder="e.g. 6.5" min="3" max="10" step="0.01" value="6.5" />
+          </div>
+          <div class="field">
+            <label>Yield Last Season <span>kg/ha</span></label>
+            <input type="number" id="yield_val" name="yield_val" placeholder="e.g. 2500" min="0" max="15000" step="1" value="2500" />
+          </div>
+          <div class="field">
+            <label>Fertilizer Used <span>kg/ha</span></label>
+            <input type="number" id="fert_used" name="fert_used" placeholder="e.g. 120" min="0" max="1000" step="1" value="120" />
+          </div>
+        </div>
+
+        <!-- Categorical parameters -->
+        <div class="section-label">Farm Context</div>
+        <div class="dropdowns-grid">
+          <div class="field">
+            <label>Season</label>
+            <select id="season" name="season">
+              <option value="Kharif">Kharif (Jun–Sep)</option>
+              <option value="Rabi">Rabi (Oct–Mar)</option>
+              <option value="Zaid">Zaid (Mar–Jun)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Irrigation Type</label>
+            <select id="irrigation" name="irrigation">
+              <option value="Canal">Canal</option>
+              <option value="Drip">Drip</option>
+              <option value="Rainfed">Rainfed</option>
+              <option value="Sprinkler">Sprinkler</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Previous Crop</label>
+            <select id="prev_crop" name="prev_crop">
+              <option value="Wheat">Wheat</option>
+              <option value="Rice">Rice</option>
+              <option value="Maize">Maize</option>
+              <option value="Cotton">Cotton</option>
+              <option value="Potato">Potato</option>
+              <option value="Sugarcane">Sugarcane</option>
+              <option value="Tomato">Tomato</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Region</label>
+            <select id="region" name="region">
+              <option value="South">South</option>
+              <option value="North">North</option>
+              <option value="East">East</option>
+              <option value="West">West</option>
+              <option value="Central">Central</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="submitBtn" onclick="runPrediction()">
+          <span>🔍</span> Analyze Soil &amp; Get Recommendations
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── RESULTS PANEL ────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">📊</span>
+        <h2>Analysis Results</h2>
+      </div>
+      <div class="card-body">
+
+        <!-- Placeholder -->
+        <div class="results-placeholder" id="resultsPlaceholder">
+          <div class="ph-icon">🌾</div>
+          <p>Upload a soil image and fill in the parameters,<br>then click <strong>Analyze</strong> to see recommendations.</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error-banner" id="errorBanner" style="display:none"></div>
+
+        <!-- Results content -->
+        <div id="resultsContent">
+
+          <!-- Soil type -->
+          <div class="soil-result card" id="soilResult">
+            <div class="soil-banner" id="soilBanner">
+              <div class="soil-icon-big" id="soilIconBig">🪨</div>
+              <div class="soil-name-wrap">
+                <div class="soil-label">Detected Soil Type</div>
+                <div class="soil-name" id="soilNameDisplay">—</div>
+              </div>
+              <div class="conf-badge">
+                <div class="conf-val" id="confVal">—%</div>
+                <div class="conf-text">confidence</div>
+              </div>
+            </div>
+            <div class="prob-section">
+              <h3>All Soil Probabilities</h3>
+              <div id="probBars"></div>
+            </div>
+          </div>
+
+          <!-- Recommended crops -->
+          <div class="crops-section">
+            <h3>Top Recommended Crops</h3>
+            <div class="crop-cards" id="cropCards"></div>
+          </div>
+
+          <!-- Soil fertilizer -->
+          <div class="fert-card">
+            <div class="fert-icon">🌿</div>
+            <div>
+              <div class="fert-label">Soil Fertilizer Recommendation</div>
+              <div class="fert-name" id="fertName">—</div>
+              <div class="fert-npk" id="fertNpk">—</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Loading overlay ──────────────────────────────────────── -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Analyzing soil with AI model…</div>
+</div>
+
+<script>
+  /* ── Drag & drop ─────────────────────────────────────────── */
+  const dropZone   = document.getElementById('dropZone');
+  const imageInput = document.getElementById('imageInput');
+  const previewWrap= document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault(); dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) setPreview(file);
+  });
+  imageInput.addEventListener('change', () => {
+    if (imageInput.files[0]) setPreview(imageInput.files[0]);
+  });
+  document.getElementById('clearImg').addEventListener('click', e => {
+    e.stopPropagation(); clearPreview();
+  });
+
+  function setPreview(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      previewImg.src = ev.target.result;
+      previewWrap.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    imageInput.files = dt.files;
+  }
+
+  function clearPreview() {
+    previewImg.src = '';
+    previewWrap.style.display = 'none';
+    imageInput.value = '';
+  }
+
+  /* ── Helpers ─────────────────────────────────────────────── */
+  const SOIL_CSS = {
+    'Alluvial Soil': 'soil-alluvial',
+    'Black Soil':    'soil-black',
+    'Clay Soil':     'soil-clay',
+    'Laterite Soil': 'soil-laterite',
+    'Red Soil':      'soil-red',
+    'Yellow Soil':   'soil-yellow',
+  };
+  const SOIL_ICON = {
+    'Alluvial Soil': '🏜️',
+    'Black Soil':    '⬛',
+    'Clay Soil':     '🧱',
+    'Laterite Soil': '🪨',
+    'Red Soil':      '🔴',
+    'Yellow Soil':   '🟡',
+  };
+  const PROB_COLOR = {
+    'Alluvial Soil': '#9e8c6a',
+    'Black Soil':    '#6b6b6b',
+    'Clay Soil':     '#b07050',
+    'Laterite Soil': '#c0522c',
+    'Red Soil':      '#e53e3e',
+    'Yellow Soil':   '#d4a017',
+  };
+  const CROP_EMOJI = {
+    'Rice': '🌾', 'Wheat': '🌾', 'Cotton': '🌿', 'Maize': '🌽',
+    'Sugarcane': '🎋', 'Tomato': '🍅', 'Potato': '🥔', 'Groundnut': '🥜',
+    'Jute': '🌿', 'Barley': '🌾', 'Mustard': '🌻', 'Peas': '🫛',
+    'Sorghum': '🌾', 'Soybean': '🌱', 'Sunflower': '🌻', 'Chickpea': '🫘',
+    'Linseed': '🌼', 'Safflower': '🌸', 'Sesame': '🌿', 'Moong': '🫘',
+    'Cashew': '🥜', 'Rubber': '🌳', 'Tea': '🍵', 'Coffee': '☕',
+    'Tapioca': '🥔', 'Turmeric': '🟡', 'Ginger': '🫚',
+    'Watermelon': '🍉', 'Muskmelon': '🍈', 'Cucumber': '🥒',
+    'Bitter Gourd': '🥬', 'Pumpkin': '🎃', 'Taro': '🌱',
+    'Spinach': '🥬', 'Mango': '🥭', 'Pineapple': '🍍',
+    'Jackfruit': '🟡', 'Banana': '🍌', 'Sunflower': '🌻',
+  };
+
+  function stars(n) {
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  /* ── Prediction ──────────────────────────────────────────── */
+  async function runPrediction() {
+    const imgFile = imageInput.files[0];
+    if (!imgFile) {
+      alert('Please upload a soil image before analyzing.');
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('image', imgFile);
+
+    const fields = ['n','p','k','temp','humidity','rainfall','ph','yield_val','fert_used',
+                    'season','irrigation','prev_crop','region'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) fd.append(id, el.value);
+    });
+
+    // Show loading
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('errorBanner').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'none';
+    document.getElementById('resultsPlaceholder').style.display = 'none';
+
+    try {
+      const resp = await fetch('/predict', { method: 'POST', body: fd });
+      const data = await resp.json();
+
+      if (data.error) throw new Error(data.error);
+
+      renderResults(data);
+    } catch (err) {
+      document.getElementById('resultsPlaceholder').style.display = 'none';
+      document.getElementById('errorBanner').style.display = 'block';
+      document.getElementById('errorBanner').textContent = '⚠️ Error: ' + err.message;
+    } finally {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+      document.getElementById('submitBtn').disabled = false;
+    }
+  }
+
+  function renderResults(d) {
+    /* -- Soil banner -- */
+    const banner = document.getElementById('soilBanner');
+    banner.className = 'soil-banner ' + (SOIL_CSS[d.soil_type] || 'soil-alluvial');
+    document.getElementById('soilIconBig').textContent = SOIL_ICON[d.soil_type] || '🪨';
+    document.getElementById('soilNameDisplay').textContent = d.soil_type;
+    document.getElementById('confVal').textContent = d.confidence + '%';
+
+    /* -- Probability bars -- */
+    const probContainer = document.getElementById('probBars');
+    probContainer.innerHTML = '';
+    const sorted = Object.entries(d.all_probabilities)
+      .sort((a, b) => b[1] - a[1]);
+    sorted.forEach(([name, pct]) => {
+      const color = PROB_COLOR[name] || '#4caf50';
+      const row = document.createElement('div');
+      row.className = 'prob-row';
+      row.innerHTML = `
+        <div class="prob-name">${name}</div>
+        <div class="prob-bar">
+          <div class="prob-fill" style="width:0%;background:${color}" data-target="${pct}"></div>
+        </div>
+        <div class="prob-pct">${pct}%</div>`;
+      probContainer.appendChild(row);
+    });
+    // Animate bars
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.prob-fill').forEach(el => {
+        el.style.width = el.dataset.target + '%';
+      });
+    });
+
+    /* -- Crop cards -- */
+    const cropContainer = document.getElementById('cropCards');
+    cropContainer.innerHTML = '';
+    d.recommended_crops.forEach(crop => {
+      const emoji = CROP_EMOJI[crop.name] || '🌱';
+      const card = document.createElement('div');
+      card.className = `crop-card rank-${crop.rank}`;
+      card.innerHTML = `
+        <div class="crop-emoji">${emoji}</div>
+        <div class="crop-info">
+          <div class="crop-name">${crop.name}</div>
+          <div class="crop-fert">🌿 ${crop.fertilizer}</div>
+          <div class="crop-npk">NPK: ${crop.npk}</div>
+        </div>
+        <div class="crop-rank">
+          <div class="stars">${stars(crop.stars)}</div>
+          <div class="rank-label">RANK #${crop.rank}</div>
+        </div>`;
+      cropContainer.appendChild(card);
+    });
+
+    /* -- Soil fertilizer -- */
+    document.getElementById('fertName').textContent = d.soil_fertilizer;
+    document.getElementById('fertNpk').textContent  = d.soil_npk;
+
+    /* -- Show results -- */
+    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('resultsContent').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+
+</body>
+</html>
