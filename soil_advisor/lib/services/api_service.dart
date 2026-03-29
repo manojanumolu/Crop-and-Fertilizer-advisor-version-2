@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Local Flask API (Android emulator uses 10.0.2.2 to reach host localhost)
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  // Real phone: use PC's WiFi IP. Emulator: use 10.0.2.2
+  static const String baseUrl = 'http://192.168.0.101:8000';
 
   static Future<Map<String, dynamic>> predict({
     required File imageFile,
