@@ -2,14 +2,13 @@
 # ResNet-50 + XGBoost + TSACA Fusion + GRN  |  Accuracy: 98.67%
 # Run: streamlit run streamlit_app.py
 
-import io, os, json, pickle, urllib.request
+import io, os, json, pickle
 import numpy as np, pandas as pd
 import torch, torch.nn as nn
 import xgboost as xgb
 import streamlit as st
 from PIL import Image
 from torchvision import models, transforms
-from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 
 # ── Page config ────────────────────────────────────────────────
 st.set_page_config(
@@ -404,94 +403,56 @@ def run_inference(img_model, tab_proj, fusion, xgb_clf, scaler,
 # SOIL IMAGE VALIDATOR
 # ══════════════════════════════════════════════════════════════
 
-@st.cache_resource(show_spinner="Loading image classifier…")
-def load_mobilenet():
-    model = mobilenet_v3_small(
-        weights=MobileNet_V3_Small_Weights.IMAGENET1K_V1)
-    model.eval()
-    return model
+def is_soil_image(pil_img, img_model, transform):
+    """7-rule validator: color checks + ResNet confidence. Returns bool."""
+    arr = np.array(pil_img.resize((200, 200)).convert("RGB")).astype(float)
+    r = arr[:, :, 0]; g = arr[:, :, 1]; b = arr[:, :, 2]
+    total = 200 * 200
 
-@st.cache_resource(show_spinner="Loading ImageNet labels…")
-def load_imagenet_labels():
-    url = ("https://raw.githubusercontent.com/anishathalye/"
-           "imagenet-simple-labels/master/imagenet-simple-labels.json")
-    with urllib.request.urlopen(url) as resp:
-        return json.loads(resp.read().decode())
+    # Rule 1: Neon colors
+    cyan_pixels     = np.sum((b > 150) & (g > 150) & (r < 100)) / total
+    orange_neon     = np.sum((r > 220) & (g > 80) & (g < 170) & (b < 80)) / total
+    pink_neon       = np.sum((r > 200) & (b > 150) & (g < 100)) / total
+    bright_red_neon = np.sum((r > 220) & (g < 60) & (b < 60)) / total
+    if (cyan_pixels + orange_neon + pink_neon + bright_red_neon) > 0.02:
+        return False
 
-def is_soil_image(pil_img):
-    """MobileNetV3-ImageNet based soil validator.
-    Uses a general 1000-class classifier to detect soil-related content.
-    """
-    mobilenet       = load_mobilenet()
-    imagenet_labels = load_imagenet_labels()
+    # Rule 2: Skin
+    skin = np.sum(
+        (r > 160) & (g > 110) & (b > 90) & (r > g) & (g > b) &
+        ((r + g + b) / 3 > 120) & ((r + g + b) / 3 < 210) &
+        ((r - b) > 25) & ((r - b) < 120)
+    ) / total
+    if skin > 0.18:
+        return False
 
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406],
-                              [0.229, 0.224, 0.225]),
-    ])
-    img_t = preprocess(pil_img).unsqueeze(0)
+    # Rule 3: Pure blue
+    if np.sum((b > r + 40) & (b > g + 30) & (b > 110)) / total > 0.22:
+        return False
+
+    # Rule 4: Vivid green
+    if np.sum((g > r + 35) & (g > b + 35) & (g > 90)) / total > 0.22:
+        return False
+
+    # Rule 5: Too bright
+    if arr.mean() > 195:
+        return False
+
+    # Rule 6: High gradient diff (gaming/UI)
+    h_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=1)).mean()
+    v_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=0)).mean()
+    if (h_diff + v_diff) / 2 > 28:
+        return False
+
+    # Rule 7: ResNet confidence
+    img_t = transform(pil_img).unsqueeze(0)
     with torch.no_grad():
-        probs = torch.softmax(mobilenet(img_t), dim=-1)[0]
+        out   = img_model(img_t, return_features=False)
+        probs = torch.softmax(out, dim=-1)[0]
+    if probs.max().item() * 100 < 40.0:
+        return False
 
-    top10_probs, top10_idx = torch.topk(probs, 10)
-    top10_labels = [imagenet_labels[i.item()].lower() for i in top10_idx]
-    top10_conf   = [p.item() for p in top10_probs]
-
-    soil_keywords = [
-        "soil", "dirt", "mud", "clay", "sand", "gravel", "ground",
-        "earth", "loam", "peat", "humus", "terrain", "field",
-        "farmland", "plowland", "tilth", "subsoil", "topsoil",
-        "silt", "sediment", "rock", "stone", "mineral", "land",
-        "agriculture", "furrow", "clod", "rubble", "grit",
-        "dust", "powder", "granule", "aggregate",
-    ]
-    reject_keywords = [
-        "person", "man", "woman", "boy", "girl", "face", "head",
-        "hair", "hand", "finger", "skin", "people", "human",
-        "portrait", "selfie", "jersey", "suit", "dress",
-        "weapon", "gun", "rifle", "sword", "knife", "pistol",
-        "firearm", "blade", "dagger",
-        "game", "screenshot", "interface", "screen", "monitor",
-        "tv", "television",
-        "car", "vehicle", "bus", "truck", "bike", "plane",
-        "aircraft", "ship", "boat",
-        "food", "fruit", "vegetable", "pizza", "burger", "cake",
-        "bread", "meat",
-        "sky", "cloud", "ocean", "sea", "lake", "river", "water",
-        "pool", "beach",
-        "building", "house", "room", "wall", "furniture",
-        "chair", "table", "desk",
-        "animal", "dog", "cat", "bird", "fish",
-        "flower", "tree", "leaf", "plant", "grass",
-    ]
-
-    soil_score = reject_score = 0.0
-    for label, conf in zip(top10_labels, top10_conf):
-        if any(kw in label for kw in soil_keywords):
-            soil_score += conf
-        if any(kw in label for kw in reject_keywords):
-            reject_score += conf
-
-    # Hard reject if top-1 is clearly non-soil
-    if any(kw in top10_labels[0] for kw in reject_keywords) and top10_conf[0] > 0.15:
-        return False, "No soil detected in this image."
-
-    if soil_score > 0.10:
-        return True, "Valid soil image"
-
-    if reject_score > soil_score + 0.05:
-        return False, "No soil detected in this image."
-
-    # Fallback: texture check for uncertain cases
-    arr        = np.array(pil_img.resize((100, 100))).astype(float)
-    variance   = np.var(arr)
-    brightness = arr.mean()
-    if variance < 100 or brightness > 200 or variance > 8000:
-        return False, "No soil detected in this image."
-
-    return True, "Valid soil image"
+    return True
 
 
 # ══════════════════════════════════════════════════════════════
@@ -668,23 +629,41 @@ with right:
         st.error("Please upload a soil image before analyzing.")
 
     else:
-        # ── Soil image validation (MobileNetV3-ImageNet) ──────
+        # ── Soil image validation ──────────────────────────────
         _pil_check = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        _valid, _result = is_soil_image(_pil_check)
-        if not _valid:
+        _eval_tf = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ])
+        valid = is_soil_image(_pil_check, img_model, _eval_tf)
+
+        with st.expander("🔍 Debug Values"):
+            arr_d = np.array(_pil_check.resize((200, 200))).astype(float)
+            r_d = arr_d[:, :, 0]; g_d = arr_d[:, :, 1]; b_d = arr_d[:, :, 2]
+            total_d = 200 * 200
+            cyan_d  = np.sum((b_d > 150) & (g_d > 150) & (r_d < 100)) / total_d
+            neon_o  = np.sum((r_d > 220) & (g_d > 80) & (g_d < 170) & (b_d < 80)) / total_d
+            skin_d  = np.sum((r_d > 160) & (g_d > 110) & (b_d > 90) & (r_d > g_d) & (g_d > b_d) & ((r_d + g_d + b_d) / 3 > 120)) / total_d
+            h_d     = np.abs(np.diff(arr_d[:, :, 0], axis=1)).mean()
+            st.write(f"Cyan neon: {cyan_d:.3f} (reject if >0.02)")
+            st.write(f"Orange neon: {neon_o:.3f} (reject if >0.02)")
+            st.write(f"Skin ratio: {skin_d:.3f} (reject if >0.18)")
+            st.write(f"H-diff: {h_d:.2f} (reject if >28)")
+            st.write(f"Brightness: {arr_d.mean():.1f} (reject if >195)")
+
+        if not valid:
             st.markdown("""
             <div style="background:#FFEBEE; border-left:4px solid #C62828;
             border-radius:12px; padding:24px; margin:16px 0">
-              <h3 style="color:#C62828; margin:0 0 8px 0">❌ No Soil Detected</h3>
-              <p style="color:#B71C1C; margin:0 0 16px 0">
-              The uploaded image does not appear to contain soil.
-              Please upload a clear photograph of soil.</p>
-              <p style="color:#555; margin:0; font-size:14px">
-                <strong>Valid examples:</strong><br>
-                • Close-up of bare soil<br>
-                • Soil held in hands<br>
-                • Soil sample in container<br>
-                • Agricultural field close-up
+              <h3 style="color:#C62828; margin:0">❌ No Soil Detected</h3>
+              <p style="color:#B71C1C; margin:12px 0">
+              Please upload a clear soil photograph.</p>
+              <p style="color:#555; font-size:14px; margin:0">
+              ✓ Red soil, Black soil, Clay soil close-ups<br>
+              ✓ Soil held in hands<br>
+              ✓ Soil in containers or farm fields<br>
+              ✗ People, screenshots, plants, sky not allowed
               </p>
             </div>
             """, unsafe_allow_html=True)
