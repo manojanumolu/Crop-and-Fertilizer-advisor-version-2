@@ -33,8 +33,18 @@ _BASE_CSS = """
     padding: 14px 48px; font-size: 18px; font-weight: 600;
     border-radius: 30px; width: 100%; cursor: pointer;
     margin-top: 16px; transition: background 0.2s;
+    white-space: nowrap !important;
   }
   div.stButton > button:hover { background: #1B5E20; }
+  /* Theme toggle button — override width/padding for compact size */
+  div[data-testid="column"]:last-child div.stButton > button {
+    min-width: 90px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    white-space: nowrap !important;
+  }
 </style>
 """
 
@@ -394,39 +404,57 @@ def run_inference(img_model, tab_proj, fusion, xgb_clf, scaler,
 # ══════════════════════════════════════════════════════════════
 
 def is_soil_image(pil_image):
-    """Check if image is likely a soil image by analyzing color distribution."""
-    img = pil_image.resize((100, 100))
-    img_array = np.array(img.convert("RGB"))
+    """Pixel-level soil validator — rejects people, sky, grass, bright images."""
+    img = pil_image.resize((150, 150)).convert("RGB")
+    arr = np.array(img).astype(float)
 
-    r = float(img_array[:, :, 0].mean())
-    g = float(img_array[:, :, 1].mean())
-    b = float(img_array[:, :, 2].mean())
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    r_mean, g_mean, b_mean = r.mean(), g.mean(), b.mean()
+    brightness = (r_mean + g_mean + b_mean) / 3
+    total_pixels = 150 * 150
 
-    total = r + g + b + 1e-6
-    r_ratio = r / total
-    g_ratio = g / total
-    b_ratio = b / total
-    brightness = (r + g + b) / 3
+    # ── Pixel-level soil classification ───────────────────────
+    px_bright = (r + g + b) / 3
+    saturation = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
 
-    is_too_bright  = brightness > 200
-    is_too_blue    = b_ratio > 0.38
-    is_too_green   = g_ratio > 0.42
-    is_skin_tone   = (r > 150 and g > 100 and b > 80
-                      and r > g > b and brightness > 130)
-    is_too_colorful = (abs(r - g) + abs(g - b) + abs(r - b)) > 200
+    reject_bright   = px_bright > 190
+    reject_blue     = (b > r + 20) & (b > g)
+    reject_green    = (g > r + 25) & (g > b + 25)
+    reject_skin     = ((r > 140) & (g > 90) & (b > 70) &
+                       (r > g) & (g > b) &
+                       (r - b < 120) &
+                       (px_bright > 100) & (px_bright < 220))
+    reject_vivid    = saturation > 150
 
-    is_earthy = (r_ratio >= 0.30 and b_ratio <= 0.35 and brightness < 180)
+    is_soil_px = ~(reject_bright | reject_blue | reject_green |
+                   reject_skin   | reject_vivid)
+    soil_ratio = is_soil_px.sum() / total_pixels
 
-    if is_too_blue:
-        return False, "Image appears to contain sky or water (too blue)"
-    if is_too_green:
-        return False, "Image appears to contain grass or vegetation (too green)"
-    if is_skin_tone:
-        return False, "Image appears to contain a person or skin tones"
-    if is_too_bright:
-        return False, "Image is too bright — please use a close-up soil photo"
-    if not is_earthy:
-        return False, "Image colors don't match typical soil patterns (expected earthy browns/reds)"
+    # ── Global ratio checks ────────────────────────────────────
+    skin_ratio  = (((r > 140) & (g > 90)  & (b > 70)  &
+                    (r > g)   & (g > b)   & (px_bright > 100)).sum()
+                   / total_pixels)
+    blue_ratio  = (((b > r + 15) & (b > g) & (b > 100)).sum()
+                   / total_pixels)
+    green_ratio = (((g > r + 20) & (g > b + 20) & (g > 80)).sum()
+                   / total_pixels)
+
+    # ── Decision ───────────────────────────────────────────────
+    if skin_ratio > 0.15:
+        return False, ("Human or person detected. "
+                       "Please upload only soil photos.")
+    if blue_ratio > 0.30:
+        return False, ("Sky or water detected. "
+                       "Please upload a close-up soil photo.")
+    if green_ratio > 0.35:
+        return False, ("Plants or grass detected. "
+                       "Please upload a close-up soil photo without vegetation.")
+    if brightness > 185:
+        return False, ("Image is too bright for soil analysis. "
+                       "Please upload a clear soil photo.")
+    if soil_ratio < 0.35:
+        return False, ("Not enough soil-like colors detected. "
+                       "Please upload a clear close-up photo of soil.")
 
     return True, "Valid soil image"
 
@@ -609,10 +637,20 @@ with right:
         _pil_check = Image.open(io.BytesIO(img_bytes)).convert("RGB")
         _valid, _msg = is_soil_image(_pil_check)
         if not _valid:
-            st.error(f"❌ **Invalid Image Detected!**\n\n{_msg}\n\n"
-                     "Please upload a clear photo of soil.\n"
-                     "Accepted: Red soil, Black soil, Clay soil, "
-                     "Sandy soil, Alluvial soil photos.")
+            st.markdown(f"""
+            <div style="background:#FFEBEE; border-left:4px solid #C62828;
+            border-radius:12px; padding:20px; margin:16px 0">
+              <h3 style="color:#C62828; margin:0 0 8px 0">❌ Invalid Image</h3>
+              <p style="color:#B71C1C; margin:0 0 12px 0">{_msg}</p>
+              <p style="color:#555; margin:0; font-size:13px">
+                <strong>Valid soil images look like:</strong><br>
+                • Close-up photos of bare soil<br>
+                • Soil in hands (mostly soil visible, not skin)<br>
+                • Soil samples in containers<br>
+                • Agricultural field soil close-ups
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
             st.stop()
 
         with st.spinner("Running AI inference…"):
