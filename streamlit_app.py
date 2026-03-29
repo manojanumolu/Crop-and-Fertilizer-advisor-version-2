@@ -404,57 +404,103 @@ def run_inference(img_model, tab_proj, fusion, xgb_clf, scaler,
 # ══════════════════════════════════════════════════════════════
 
 def is_soil_image(pil_image):
-    """Pixel-level soil validator — rejects people, sky, grass, bright images."""
-    img = pil_image.resize((150, 150)).convert("RGB")
+    """Ultra-strict soil validator — rejects screenshots, gaming images,
+    people, sky, grass, food, and any non-soil photo."""
+    img = pil_image.resize((200, 200)).convert("RGB")
     arr = np.array(img).astype(float)
 
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
     r_mean, g_mean, b_mean = r.mean(), g.mean(), b.mean()
     brightness = (r_mean + g_mean + b_mean) / 3
-    total_pixels = 150 * 150
+    total_pixels = 200 * 200
 
-    # ── Pixel-level soil classification ───────────────────────
+    # ── 1. Reject dark/gaming screenshots ─────────────────────
+    very_dark = np.sum((r < 40) & (g < 40) & (b < 40)) / total_pixels
+    if very_dark > 0.25:
+        return False, ("Image appears to be a dark screenshot or gaming image. "
+                       "Please upload a real soil photo.")
+
+    # ── 2. Reject neon/vivid colors (UI/screenshots) ──────────
+    neon_red    = np.sum((r > 200) & (g < 80)  & (b < 80))  / total_pixels
+    neon_blue   = np.sum((b > 200) & (r < 80)  & (g < 80))  / total_pixels
+    neon_green  = np.sum((g > 200) & (r < 80)  & (b < 80))  / total_pixels
+    neon_orange = np.sum((r > 220) & (g > 100) & (g < 160) & (b < 60)) / total_pixels
+    neon_cyan   = np.sum((b > 180) & (g > 180) & (r < 80))  / total_pixels
+    if (neon_red + neon_blue + neon_green + neon_orange + neon_cyan) > 0.04:
+        return False, ("Bright neon colors detected. This looks like a screenshot "
+                       "or digital image. Please upload a real soil photograph.")
+
+    # ── 3. Reject skin tones / people ─────────────────────────
     px_bright = (r + g + b) / 3
-    saturation = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
+    skin = np.sum(
+        (r > 140) & (g > 90) & (b > 70) &
+        (r > g) & (g > b) &
+        (px_bright > 100) & (px_bright < 220) &
+        ((r - b) < 130)
+    ) / total_pixels
+    if skin > 0.12:
+        return False, ("Person or skin tone detected. "
+                       "Please upload only soil photos without people.")
 
-    reject_bright   = px_bright > 190
-    reject_blue     = (b > r + 20) & (b > g)
-    reject_green    = (g > r + 25) & (g > b + 25)
-    reject_skin     = ((r > 140) & (g > 90) & (b > 70) &
-                       (r > g) & (g > b) &
-                       (r - b < 120) &
-                       (px_bright > 100) & (px_bright < 220))
-    reject_vivid    = saturation > 150
-
-    is_soil_px = ~(reject_bright | reject_blue | reject_green |
-                   reject_skin   | reject_vivid)
-    soil_ratio = is_soil_px.sum() / total_pixels
-
-    # ── Global ratio checks ────────────────────────────────────
-    skin_ratio  = (((r > 140) & (g > 90)  & (b > 70)  &
-                    (r > g)   & (g > b)   & (px_bright > 100)).sum()
-                   / total_pixels)
-    blue_ratio  = (((b > r + 15) & (b > g) & (b > 100)).sum()
-                   / total_pixels)
-    green_ratio = (((g > r + 20) & (g > b + 20) & (g > 80)).sum()
-                   / total_pixels)
-
-    # ── Decision ───────────────────────────────────────────────
-    if skin_ratio > 0.15:
-        return False, ("Human or person detected. "
-                       "Please upload only soil photos.")
-    if blue_ratio > 0.30:
+    # ── 4. Reject blue sky / water ─────────────────────────────
+    blue_dom = np.sum((b > r + 20) & (b > g + 10) & (b > 100)) / total_pixels
+    if blue_dom > 0.25:
         return False, ("Sky or water detected. "
-                       "Please upload a close-up soil photo.")
-    if green_ratio > 0.35:
+                       "Please upload a close-up photo of soil only.")
+
+    # ── 5. Reject vivid green (grass/plants) ──────────────────
+    vivid_green = np.sum((g > r + 25) & (g > b + 25) & (g > 80)) / total_pixels
+    if vivid_green > 0.25:
         return False, ("Plants or grass detected. "
                        "Please upload a close-up soil photo without vegetation.")
-    if brightness > 185:
-        return False, ("Image is too bright for soil analysis. "
-                       "Please upload a clear soil photo.")
-    if soil_ratio < 0.35:
-        return False, ("Not enough soil-like colors detected. "
-                       "Please upload a clear close-up photo of soil.")
+
+    # ── 6. Reject too bright ───────────────────────────────────
+    if brightness > 190:
+        return False, ("Image is too bright. Soil images are typically darker. "
+                       "Please upload a clear close-up soil photo.")
+
+    # ── 7. Reject high color saturation ───────────────────────
+    sat = (np.maximum(np.maximum(r, g), b) -
+           np.minimum(np.minimum(r, g), b))
+    high_sat_px = np.sum(sat > 120) / total_pixels
+    if sat.mean() > 80 or high_sat_px > 0.35:
+        return False, ("Image has too many vivid colors. Real soil photos have "
+                       "natural earthy tones. Please upload an actual soil photo.")
+
+    # ── 8. Reject UI/text (high structured row variance) ──────
+    row_vars = [np.var(arr[i, :, :]) for i in range(0, 200, 10)]
+    if np.mean(row_vars) > 4500:
+        return False, ("Image appears to contain text or UI elements. "
+                       "Please upload a plain soil photograph.")
+
+    # ── Positive soil score (need ≥ 3/5) ──────────────────────
+    score = 0
+
+    earthy = np.sum(
+        (r > 60) & (r >= g) & (g >= b) &
+        (px_bright < 180) & (px_bright > 20)
+    ) / total_pixels
+    if earthy > 0.30:
+        score += 1
+
+    dark_px = np.sum((r < 130) & (g < 130) & (b < 130) & (px_bright > 15)) / total_pixels
+    if dark_px > 0.35:
+        score += 1
+
+    if b_mean < 100:
+        score += 1
+
+    overall_var = np.var(arr)
+    if 200 < overall_var < 3500:
+        score += 1
+
+    if r_mean >= g_mean and g_mean >= b_mean * 0.85:
+        score += 1
+
+    if score < 3:
+        return False, (f"Image does not look like soil (score: {score}/5). "
+                       f"Please upload a clear close-up photograph of bare soil. "
+                       f"Good examples: red soil, black soil, clay soil, sandy soil.")
 
     return True, "Valid soil image"
 
