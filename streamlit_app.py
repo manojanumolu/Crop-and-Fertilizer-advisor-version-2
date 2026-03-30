@@ -425,61 +425,36 @@ def run_inference(img_model, tab_proj, fusion, xgb_clf, scaler,
 # SOIL IMAGE VALIDATOR
 # ══════════════════════════════════════════════════════════════
 
-def is_soil_image(pil_img, img_model, transform):
-    """7-rule validator: color checks + ResNet confidence. Returns bool."""
-    arr = np.array(pil_img.resize((200, 200)).convert("RGB")).astype(float)
-    r = arr[:, :, 0]; g = arr[:, :, 1]; b = arr[:, :, 2]
-    total = 200 * 200
+@st.cache_resource
+def load_validator():
+    from torchvision.models import mobilenet_v3_small
+    import torch.nn as nn
+    model = mobilenet_v3_small(weights=None)
+    model.classifier[3] = nn.Linear(1024, 2)
+    model.load_state_dict(
+        torch.load("soil_validator.pt", map_location="cpu")
+    )
+    model.eval()
+    return model
 
-    # Rule 1: Neon colors
-    cyan_pixels     = np.sum((b > 150) & (g > 150) & (r < 100)) / total
-    orange_neon     = np.sum((r > 220) & (g > 80) & (g < 170) & (b < 80)) / total
-    pink_neon       = np.sum((r > 200) & (b > 150) & (g < 100)) / total
-    bright_red_neon = np.sum((r > 220) & (g < 60) & (b < 60)) / total
-    if (cyan_pixels + orange_neon + pink_neon + bright_red_neon) > 0.02:
-        return False
-
-    # Rule 2: Skin (hands allowed, be lenient)
-    skin = np.sum(
-        (r > 160) & (g > 110) & (b > 90) & (r > g) & (g > b) &
-        ((r + g + b) / 3 > 120) & ((r + g + b) / 3 < 210) &
-        ((r - b) > 25) & ((r - b) < 120)
-    ) / total
-    if skin > 0.30:
-        return False
-
-    # Rule 3: Pure blue
-    if np.sum((b > r + 40) & (b > g + 30) & (b > 110)) / total > 0.22:
-        return False
-
-    # Rule 4: Vivid green
-    if np.sum((g > r + 35) & (g > b + 35) & (g > 90)) / total > 0.22:
-        return False
-
-    # Rule 5: Too bright
-    if arr.mean() > 195:
-        return False
-
-    # Rule 6: High gradient diff (gaming/UI)
-    h_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=1)).mean()
-    v_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=0)).mean()
-    if (h_diff + v_diff) / 2 > 28:
-        return False
-
-    # Rule 7: ResNet confidence + margin
-    img_t = transform(pil_img).unsqueeze(0)
+def is_soil_image(pil_img):
+    import torch
+    from torchvision import transforms
+    tf = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.485, 0.456, 0.406],
+            [0.229, 0.224, 0.225]
+        )
+    ])
+    validator = load_validator()
+    img_t = tf(pil_img).unsqueeze(0)
     with torch.no_grad():
-        out   = img_model(img_t, return_features=False)
-        probs = torch.softmax(out, dim=-1)[0]
-    maxp = probs.max().item() * 100
-    top2 = torch.topk(probs, 2).values
-    gap  = (top2[0] - top2[1]).item()
-    if maxp < 35.0:
-        return False
-    if maxp < 45.0 and gap < 0.08:
-        return False
-
-    return True
+        out = validator(img_t)
+        prob = torch.softmax(out, dim=-1)[0]
+    soil_prob = prob[1].item()
+    return soil_prob > 0.60
 
 
 # ══════════════════════════════════════════════════════════════
@@ -656,33 +631,27 @@ with right:
 
     if predict_clicked and img_bytes:
         _pil_check = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        _eval_tf = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ])
-        valid = is_soil_image(_pil_check, img_model, _eval_tf)
 
-        with st.expander("Debug Values"):
-            arr_d = np.array(_pil_check.resize((200, 200))).astype(float)
-            r_d = arr_d[:, :, 0]; g_d = arr_d[:, :, 1]; b_d = arr_d[:, :, 2]
-            total_d = 200 * 200
-            cyan_d  = np.sum((b_d > 150) & (g_d > 150) & (r_d < 100)) / total_d
-            neon_o  = np.sum((r_d > 220) & (g_d > 80) & (g_d < 170) & (b_d < 80)) / total_d
-            skin_d  = np.sum((r_d > 160) & (g_d > 110) & (b_d > 90) & (r_d > g_d) & (g_d > b_d) & ((r_d + g_d + b_d) / 3 > 120)) / total_d
-            h_d     = np.abs(np.diff(arr_d[:, :, 0], axis=1)).mean()
-            st.write(f"Cyan neon: {cyan_d:.3f} (reject if >0.02)")
-            st.write(f"Orange neon: {neon_o:.3f} (reject if >0.02)")
-            st.write(f"Skin ratio: {skin_d:.3f} (reject if >0.30)")
-            st.write(f"H-diff: {h_d:.2f} (reject if >28)")
-            st.write(f"Brightness: {arr_d.mean():.1f} (reject if >195)")
+        if not is_soil_image(_pil_check):
+            st.markdown("""
+            <div style="background:#FFEBEE;
+            border-left:4px solid #C62828;
+            border-radius:12px; padding:24px;
+            margin:16px 0">
+            <h3 style="color:#C62828; margin:0 0 8px 0">
+            ❌ No Soil Detected</h3>
+            <p style="color:#B71C1C; margin:0 0 12px 0">
+            Please upload a clear soil photograph.</p>
+            <p style="color:#555; font-size:14px; margin:0">
+            ✓ Red, Black, Clay, Alluvial soil photos<br>
+            ✓ Soil held in hands<br>
+            ✓ Soil in containers or farm fields
+            </p></div>
+            """, unsafe_allow_html=True)
+            st.stop()
 
-        if not valid:
-            st.session_state.last_error = "No Soil Detected"
-            st.session_state.last_result = None
-        else:
-            st.session_state.last_error = None
-            with st.spinner("Running AI inference..."):
+        st.session_state.last_error = None
+        with st.spinner("Running AI inference..."):
                 try:
                     soil_name, confidence, all_probs, soil_fert, crop_recs, dbg = run_inference(
                         img_model, tab_proj, fusion, xgb_clf, scaler,
@@ -704,23 +673,7 @@ with right:
                     st.session_state.last_result = None
 
     if st.session_state.last_error:
-        if st.session_state.last_error != "No Soil Detected":
-            st.error(st.session_state.last_error)
-        else:
-            st.markdown("""
-        <div style="background:#FFEBEE; border-left:4px solid #C62828;
-        border-radius:12px; padding:24px; margin:16px 0">
-          <h3 style="color:#C62828; margin:0">No Soil Detected</h3>
-          <p style="color:#B71C1C; margin:12px 0">
-          Please upload a clear soil photograph.</p>
-          <p style="color:#555; font-size:14px; margin:0">
-          - Red soil, Black soil, Clay soil close-ups<br>
-          - Soil held in hands<br>
-          - Soil in containers or farm fields<br>
-          - People, screenshots, plants, sky not allowed
-          </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.error(st.session_state.last_error)
 
     if st.session_state.last_result:
         res = st.session_state.last_result
