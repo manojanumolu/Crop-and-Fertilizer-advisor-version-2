@@ -1116,73 +1116,74 @@ def get_climate_data(village, district, state):
 # ══════════════════════════════════════════════════════════════
 
 
+
 # UI
-CUSTOM_CSS = """
+CUSTOM_CSS = f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
-""" + THEME_VARS + """ 
+:root {{
+  --bg: #FFFFFF;
+  --sidebar: #F7F8FA;
+  --card: #FDFDFD;
+  --border: #EAEAEA;
+  --text: #1B1C1A;
+  --muted: #6B7280;
+  --green: #1E5631;
+  --green-dark: #0f4a27;
+  --light-blue: #EBF5FF;
+  --pill: #E6F7ED;
+}}
 
-html, body, [class*="css"] { font-family: "Inter", sans-serif; color: var(--text); }
-h1, h2, h3, h4, h5 { font-family: "Manrope", sans-serif; color: var(--text); }
-
-.stApp, .main { background: var(--bg) !important; color: var(--text) !important; }
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding-top: 0.5rem; max-width: 1200px; }
+html, body, [class*="css"] {{ font-family: Inter, "Google Sans", sans-serif; color: var(--text); }}
+.stApp, .main {{ background: var(--bg) !important; }}
+#MainMenu, header, footer {{ visibility: hidden; }}
+.block-container {{
+  max-width: 1200px;
+  padding-top: 0.5rem;
+  padding-left: 18rem;
+  padding-right: 24px;
+}}
 
 /* Sidebar */
-.side-nav {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 16rem;
-  background: var(--surface-container-low); padding: 24px 16px; z-index: 50;
-}
-.side-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-.side-sub { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin-top: 4px; }
-.side-link { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; margin-top: 6px; font-weight: 600; color: var(--muted); text-decoration: none; }
-.side-link.active { background: rgba(255,255,255,0.6); color: var(--primary); }
+.sidebar {{ position: fixed; left: 0; top: 0; bottom: 0; width: 16rem; background: var(--sidebar); padding: 24px 18px; }}
+.sidebar h1 {{ font-size: 18px; font-weight: 700; margin: 0; }}
+.sidebar .sub {{ font-size: 10px; letter-spacing: 0.2em; color: var(--muted); margin-top: 4px; }}
+.sidebar a {{ display: block; color: #9aa0a6; text-decoration: none; padding: 10px 12px; border-radius: 999px; font-weight: 600; margin-top: 6px; }}
+.sidebar a.active {{ background: #FFFFFF; color: #1E5631; }}
 
-/* Topbar */
-.topbar {
-  margin-left: 16rem; padding: 10px 16px; position: sticky; top: 0; z-index: 40;
-  background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(6px);
-}
-.topbar-inner { display:flex; justify-content: space-between; align-items:center; background: var(--surface); border-radius: 12px; padding: 10px 16px; }
-.topbar-title { font-weight: 700; color: var(--primary-2); }
-.topbar-icons { display:flex; gap: 12px; color: var(--muted); }
+/* Cards */
+.custom-card {{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }}
 
-/* Main */
-.main-wrap { margin-left: 16rem; padding: 16px 24px 60px; }
-
-/* Panels */
-.section-box { width:100%; background: var(--surface-container-lowest); border-radius: 12px; padding: 10px 14px; margin: 10px 0 12px; font-weight: 700; }
-.panel { background: var(--surface-container-low); border-radius: 16px; padding: 20px; }
-.panel-inner { background: var(--surface-container-lowest); border-radius: 14px; padding: 18px; }
+/* Marker-based card styling */
+div[data-testid="stVerticalBlock"]:has(#card-soil-image),
+div[data-testid="stVerticalBlock"]:has(#card-soil-chem),
+div[data-testid="stVerticalBlock"]:has(#card-env),
+div[data-testid="stVerticalBlock"]:has(#card-farm-history),
+div[data-testid="stVerticalBlock"]:has(#card-farm-details),
+div[data-testid="stVerticalBlock"]:has(#card-results-hero),
+div[data-testid="stVerticalBlock"]:has(#card-results-chart),
+div[data-testid="stVerticalBlock"]:has(#card-results-2),
+div[data-testid="stVerticalBlock"]:has(#card-results-3) {{
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;
+}}
 
 /* Inputs */
-label { font-size: 10px !important; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted) !important; font-weight: 700 !important; }
+label {{ font-size: 10px !important; text-transform: uppercase; letter-spacing: 0.12em; color: #8b9096 !important; font-weight: 700 !important; }}
 div[data-testid="stNumberInput"] input,
-div[data-testid="stTextInput"] input {
-  background: var(--surface-container-lowest) !important; border: none !important; border-radius: 10px !important; height: 40px !important; padding: 6px 12px !important; color: var(--text) !important;
-}
-div[data-testid="stSelectbox"] div[role="combobox"] {
-  background: var(--surface-container-lowest) !important; border: none !important; border-radius: 10px !important; min-height: 40px !important; color: var(--text) !important;
-}
-
-/* File uploader */
-div[data-testid="stFileUploader"] { border: 2px dashed color-mix(in srgb, var(--outline) 50%, transparent) !important; border-radius: 12px !important; background: var(--surface-container-lowest) !important; padding: 14px !important; }
-div[data-testid="stFileUploader"] button { background: var(--surface) !important; color: var(--text) !important; border: none !important; border-radius: 8px !important; padding: 6px 12px !important; font-weight: 600 !important; }
+div[data-testid="stTextInput"] input {{ border: 1px solid #EAEAEA !important; background: #FFFFFF !important; border-radius: 10px !important; height: 40px !important; }}
+div[data-testid="stSelectbox"] div[role="combobox"] {{ border: 1px solid #EAEAEA !important; background: #FFFFFF !important; border-radius: 10px !important; min-height: 40px !important; }}
 
 /* Buttons */
-button[data-testid="baseButton-primary"] { background: var(--danger) !important; color:#fff !important; border:none !important; border-radius: 10px !important; font-weight: 700 !important; }
-button[data-testid="baseButton-primary"][aria-label="Analyze Soil and Predict Crop"] { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%) !important; }
-button[data-testid="baseButton-secondary"] { background: var(--surface-container-highest) !important; color: var(--text) !important; border:none !important; border-radius: 10px !important; font-weight: 700 !important; }
+button[data-testid="baseButton-primary"] {{ background: var(--green) !important; color: #fff !important; border: none !important; border-radius: 10px !important; font-weight: 700 !important; }}
+button[data-testid="baseButton-primary"]:hover {{ background: var(--green-dark) !important; }}
+button[data-testid="baseButton-secondary"] {{ background: #F0F0F0 !important; color: #3c3c3c !important; border: none !important; border-radius: 10px !important; font-weight: 700 !important; }}
 
-/* Chips */
-.chip { background: var(--secondary-fixed); color: var(--on-secondary-fixed-variant); border-radius: 999px; padding: 6px 12px; font-size: 11px; font-weight: 700; display:inline-flex; gap: 6px; align-items:center; }
+/* Pills */
+.pill {{ background: var(--pill); border-radius: 999px; padding: 6px 12px; font-size: 11px; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; }}
 
-/* Results */
-.result-hero { background: var(--surface-container-lowest); border-radius: 16px; padding: 16px; }
-.result-card { background: var(--surface-container-lowest); border-radius: 14px; padding: 14px; }
+/* Divider */
+.section-title {{ font-weight: 800; letter-spacing: 0.2em; color: #A7A7A7; text-transform: uppercase; text-align: center; margin: 20px 0; }}
 
 </style>
 """
@@ -1192,209 +1193,145 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # Sidebar
 st.markdown(
     """
-    <aside class="side-nav">
-      <div class="side-title">The Sanctuary</div>
-      <div class="side-sub">Scientific Advisor</div>
-      <div style="margin-top:18px">
-        <a class="side-link" href="#context"><span class="material-symbols-outlined">eco</span>Context</a>
-        <a class="side-link active" href="#inputs"><span class="material-symbols-outlined">psychology</span>Inputs</a>
-        <a class="side-link" href="#analysis"><span class="material-symbols-outlined">analytics</span>Analysis</a>
-      </div>
-      <div style="margin-top:24px; border-top:1px solid color-mix(in srgb, var(--outline) 15%, transparent); padding-top:12px">
-        <a class="side-link" href="#settings"><span class="material-symbols-outlined">settings</span>Settings</a>
-      </div>
-    </aside>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Topbar
-st.markdown(
-    """
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-title">Scientific Sanctuary</div>
-        <div class="topbar-icons">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="material-symbols-outlined">settings</span>
-          <span class="material-symbols-outlined">account_circle</span>
-        </div>
-      </div>
+    <div class="sidebar">
+      <h1>The Sanctuary</h1>
+      <div class="sub">SCIENTIFIC ADVISOR</div>
+      <a class="active" href="#inputs">Inputs</a>
+      <a href="#context">Context</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#settings">Settings</a>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
 # Header
-header_left, header_right = st.columns([2.4, 1], gap="large")
-with header_left:
-    st.markdown(
-        """
-        <h1 style="font-size:30px; font-weight:800; margin-bottom:6px">Precise Agricultural Intelligence</h1>
-        <p style="color:var(--muted); font-size:12px; line-height:1.5">
-          Seamlessly integrate soil data, chemical properties, and atmospheric conditions to unlock maximum potential yield through our specialized advisor pipeline.
-        </p>
-        """,
-        unsafe_allow_html=True,
-    )
-with header_right:
-    _label = "Dark Mode" if st.session_state.theme == "light" else "Light Mode"
-    if st.button(_label, key="theme_toggle", type="secondary"):
-        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-        st.rerun()
-    st.markdown(
-        """
-        <div class="panel" style="margin-top:10px">
-          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.2em; color:var(--muted); font-weight:800">Farmer Unit Guide</div>
-          <div style="margin-top:10px; font-size:12px; color:var(--text)">
-            <div style="display:flex; justify-content:space-between"><span>Yield:</span><strong>t/ha</strong></div>
-            <div style="display:flex; justify-content:space-between"><span>NPK:</span><strong>kg/ha</strong></div>
-            <div style="display:flex; justify-content:space-between"><span>Area:</span><strong>1 acre = 0.4 ha</strong></div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-st.markdown('<div id="inputs"></div>', unsafe_allow_html=True)
+st.markdown("<div id='inputs'></div>", unsafe_allow_html=True)
+c1, c2 = st.columns([3, 1])
+with c1:
+    st.markdown("<h1>Precise Agricultural Intelligence</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#6B7280'>Seamlessly integrate soil data, chemical properties, and atmospheric conditions to unlock maximum potential yield through our specialized advisor pipeline.</p>", unsafe_allow_html=True)
+with c2:
+    st.button("Dark Mode", type="secondary")
+    st.markdown("<div class='custom-card' style='background:#EBF5FF;border-radius:8px'>" 
+                "<div style='font-weight:700;margin-bottom:8px'>Farmer Unit Guide</div>"
+                "<div>Yield: <b>t/ha</b></div><div>NPK: <b>kg/ha</b></div><div>Area: <b>1 acre = 0.4 ha</b></div></div>", unsafe_allow_html=True)
 
 # Row 1
-img_col, chem_col = st.columns([1.1, 1.4], gap="large")
-with img_col:
-    st.markdown('<div class="section-box">Soil Image</div>', unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown('<div class="panel-inner">', unsafe_allow_html=True)
-    uploaded = st.file_uploader("Upload soil photo (JPG or PNG)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
-    if uploaded:
-        st.session_state.img_bytes = uploaded.getvalue()
-        st.session_state.last_result = None
-        st.session_state.last_error = None
-    img_bytes = st.session_state.img_bytes
-    if img_bytes:
-        st.image(io.BytesIO(img_bytes), use_container_width=True)
-    st.markdown('</div></div>', unsafe_allow_html=True)
+left, right = st.columns(2)
+with left:
+    with st.container():
+        st.markdown("<div id='card-soil-image'></div>", unsafe_allow_html=True)
+        st.markdown("<h4>Soil Image</h4>", unsafe_allow_html=True)
+        uploaded = st.file_uploader("Upload soil photo", type=["jpg","jpeg","png"], label_visibility="collapsed")
+        if uploaded:
+            st.session_state.img_bytes = uploaded.getvalue()
+            st.session_state.last_result = None
+            st.session_state.last_error = None
+        if st.session_state.img_bytes:
+            st.image(io.BytesIO(st.session_state.img_bytes), use_container_width=True)
 
-with chem_col:
-    st.markdown('<div class="section-box">Soil Chemical Properties</div>', unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown('<div class="panel-inner">', unsafe_allow_html=True)
-    r1c1, r1c2 = st.columns(2)
-    with r1c1:
-        n  = st.number_input("Nitrogen (N) mg/kg", 0.0, 200.0, 90.0, step=1.0)
-    with r1c2:
-        p  = st.number_input("Phosphorus (P) mg/kg", 0.0, 200.0, 42.0, step=1.0)
-    r2c1, r2c2 = st.columns(2)
-    with r2c1:
-        k  = st.number_input("Potassium (K) mg/kg", 0.0, 200.0, 43.0, step=1.0)
-    with r2c2:
-        ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01)
-    st.markdown('</div></div>', unsafe_allow_html=True)
+with right:
+    with st.container():
+        st.markdown("<div id='card-soil-chem'></div>", unsafe_allow_html=True)
+        st.markdown("<h4>Soil Chemical Properties</h4>", unsafe_allow_html=True)
+        r1, r2 = st.columns(2)
+        with r1:
+            n = st.number_input("NITROGEN (N) mg/kg", 0.0, 200.0, 90.0)
+            k = st.number_input("POTASSIUM (K) mg/kg", 0.0, 200.0, 43.0)
+        with r2:
+            p = st.number_input("PHOSPHORUS (P) mg/kg", 0.0, 200.0, 42.0)
+            ph = st.number_input("SOIL PH", 3.0, 10.0, 6.5)
 
-# Environmental Conditions
-st.markdown('<div class="section-box">Environmental Conditions</div>', unsafe_allow_html=True)
-st.markdown('<div class="panel">', unsafe_allow_html=True)
-st.markdown('<div class="panel-inner">', unsafe_allow_html=True)
-st.markdown('<div style="font-weight:700; margin-bottom:10px"><span class="material-symbols-outlined">location_on</span> Auto-Fill Climate Data</div>', unsafe_allow_html=True)
+# Row 2 Environmental Conditions
+with st.container():
+    st.markdown("<div id='card-env'></div>", unsafe_allow_html=True)
+    st.markdown("<h4>Environmental Conditions</h4>", unsafe_allow_html=True)
+    st.markdown("<div style='background:#F7F8FA;border-radius:10px;padding:12px;margin-bottom:12px;font-weight:700'>Auto-Fill Climate Data</div>", unsafe_allow_html=True)
 
-ec1, ec2, ec3, ec4 = st.columns([1.2, 1.2, 1.6, 0.8])
-with ec1:
-    sel_state = st.selectbox("Select Your State", options=["-- Select State --"] + sorted(INDIA_STATES_DISTRICTS.keys()), index=0)
-with ec2:
-    if sel_state and sel_state != "-- Select State --":
-        sel_district = st.selectbox("Select Your District", options=["-- Select District --"] + INDIA_STATES_DISTRICTS[sel_state], index=0)
-    else:
-        sel_district = "-- Select District --"
-        st.selectbox("Select Your District", options=["-- Select State First --"], disabled=True)
-with ec3:
-    village = st.text_input("Enter Village / Town", placeholder="e.g. Ramtek")
-with ec4:
-    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-    fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
-
-if fetch_btn:
-    if sel_state == "-- Select State --":
-        st.warning("Please select your state")
-    elif sel_district == "-- Select District --":
-        st.warning("Please select your district")
-    else:
-        with st.spinner("Fetching climate data..."):
-            climate, error = get_climate_data(village, sel_district, sel_state)
-        if error:
-            st.error(f"{error}")
+    c1, c2, c3, c4 = st.columns([2,2,3,2])
+    with c1:
+        sel_state = st.selectbox("Select State", options=["-- Select State --"] + sorted(INDIA_STATES_DISTRICTS.keys()), index=0)
+    with c2:
+        if sel_state and sel_state != "-- Select State --":
+            sel_district = st.selectbox("Select District", options=["-- Select District --"] + INDIA_STATES_DISTRICTS[sel_state], index=0)
         else:
-            st.session_state.auto_temp = climate["temperature"]
-            st.session_state.auto_hum  = climate["humidity"]
-            st.session_state.auto_rain = climate["rainfall"]
-            st.session_state.location_name = climate["location"]
-            st.session_state.location_note = climate.get("note", "")
-            st.rerun()
+            sel_district = "-- Select District --"
+            st.selectbox("Select District", options=["-- Select State First --"], disabled=True)
+    with c3:
+        village = st.text_input("Enter Village / Town", placeholder="e.g. Ramtek")
+    with c4:
+        fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
 
-if st.session_state.location_name:
-    st.markdown(
-        f"""
-        <div style="margin-top:10px">
-          <span class="chip">Temperature: {st.session_state.auto_temp}?C</span>
-          <span class="chip">Humidity: {st.session_state.auto_hum}%</span>
-          <span class="chip">Rainfall: {st.session_state.auto_rain}mm</span>
-          <span style="font-size:10px; color:var(--muted); margin-left:6px">Fetched for {st.session_state.location_name}</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if fetch_btn:
+        if sel_state == "-- Select State --":
+            st.warning("Please select your state")
+        elif sel_district == "-- Select District --":
+            st.warning("Please select your district")
+        else:
+            with st.spinner("Fetching climate data..."):
+                climate, error = get_climate_data(village, sel_district, sel_state)
+            if error:
+                st.error(error)
+            else:
+                st.session_state.auto_temp = climate["temperature"]
+                st.session_state.auto_hum  = climate["humidity"]
+                st.session_state.auto_rain = climate["rainfall"]
+                st.session_state.location_name = climate["location"]
+                st.rerun()
 
-et1, et2, et3 = st.columns(3)
-with et1:
-    temp = st.number_input("Temperature (C)", 10.0, 45.0, float(st.session_state.auto_temp), step=0.1)
-with et2:
-    hum  = st.number_input("Humidity (%)", 14.0, 100.0, float(st.session_state.auto_hum), step=0.1)
-with et3:
-    rain = st.number_input("Rainfall (mm)", 200.0, 3000.0, float(st.session_state.auto_rain), step=1.0)
+    if st.session_state.location_name:
+        st.markdown(
+            f"<span class='pill'>Temperature: {st.session_state.auto_temp}&#176;C</span> "
+            f"<span class='pill'>Humidity: {st.session_state.auto_hum}%</span> "
+            f"<span class='pill'>Rainfall: {st.session_state.auto_rain}mm</span>",
+            unsafe_allow_html=True,
+        )
+    et1, et2, et3 = st.columns(3)
+    with et1:
+        temp = st.number_input("Temperature (C)", 10.0, 45.0, float(st.session_state.auto_temp), step=0.1)
+    with et2:
+        hum  = st.number_input("Humidity (%)", 14.0, 100.0, float(st.session_state.auto_hum), step=0.1)
+    with et3:
+        rain = st.number_input("Rainfall (mm)", 200.0, 3000.0, float(st.session_state.auto_rain), step=1.0)
 
-st.markdown('</div></div>', unsafe_allow_html=True)
+# Row 3
+l3, r3 = st.columns(2)
+with l3:
+    with st.container():
+        st.markdown("<div id='card-farm-history'></div>", unsafe_allow_html=True)
+        st.markdown("<h4>Farm History</h4>", unsafe_allow_html=True)
+        yld = st.number_input("Yield Last Season (t/ha)", 0.0, 15000.0, 2500.0)
+        fert = st.number_input("Fertilizer Used (kg/ha)", 0.0, 1000.0, 120.0)
+        st.markdown("<div style='background:#EBF5FF;padding:10px;border-radius:8px;font-size:12px'>Unit Guide: Use tonnes per hectare...</div>", unsafe_allow_html=True)
 
-# Farm history / details
-fh_col, fd_col = st.columns(2, gap="large")
-with fh_col:
-    st.markdown('<div class="section-box">Farm History</div>', unsafe_allow_html=True)
-    st.markdown('<div class="panel"><div class="panel-inner">', unsafe_allow_html=True)
-    yld  = st.number_input("Yield Last Season (t/ha)", 0.0, 15000.0, 2500.0, step=10.0)
-    fert = st.number_input("Fertilizer Used (kg/ha)", 0.0, 1000.0, 120.0, step=5.0)
-    st.markdown('<div style="font-size:11px; color:var(--muted)">Unit Guide: Use tonnes per hectare for yield. For fertilizer, sum all NPK components.</div>', unsafe_allow_html=True)
-    st.markdown('</div></div>', unsafe_allow_html=True)
-
-with fd_col:
-    st.markdown('<div class="section-box">Farm Details</div>', unsafe_allow_html=True)
-    st.markdown('<div class="panel"><div class="panel-inner">', unsafe_allow_html=True)
-    season = st.selectbox("Season", ["Kharif (Monsoon)", "Rabi (Winter)", "Zaid (Summer)"])
-    irrig  = st.selectbox("Irrigation Type", ["Canal", "Drip", "Rainfed", "Sprinkler"])
-    prev   = st.selectbox("Previous Crop", ["Wheat", "Rice", "Maize", "Cotton", "Potato", "Sugarcane", "Tomato"])
-    region = st.selectbox("Geographic Region", ["South", "Central", "North", "East", "West"])
-    st.markdown('</div></div>', unsafe_allow_html=True)
+with r3:
+    with st.container():
+        st.markdown("<div id='card-farm-details'></div>", unsafe_allow_html=True)
+        st.markdown("<h4>Farm Details</h4>", unsafe_allow_html=True)
+        season = st.selectbox("Season", ["Kharif (Monsoon)", "Rabi (Winter)", "Zaid (Summer)"])
+        irrig  = st.selectbox("Irrigation Type", ["Canal","Drip","Rainfed","Sprinkler"])
+        prev   = st.selectbox("Previous Crop", ["Wheat","Rice","Maize","Cotton","Potato","Sugarcane","Tomato"])
+        region = st.selectbox("Geographic Region", ["South","Central","North","East","West"])
 
 # Actions
-act1, act2 = st.columns([1,1], gap="large")
-with act1:
-    analyze_clicked = st.button("Analyze Soil and Predict Crop", type="primary", use_container_width=True)
-with act2:
+b1, b2, b3, b4 = st.columns([1,2,2,1])
+with b2:
+    analyze_clicked = st.button("Analyze Soil & Predict Crop", type="primary", use_container_width=True)
+with b3:
     auto_clicked = st.button("Auto-Suggest Levels from Image", type="secondary", use_container_width=True)
 
-if auto_clicked:
-    st.info("Auto-suggest from image is not enabled yet. Use manual inputs for now.")
-
 # Results
-st.markdown('<div id="analysis"></div>', unsafe_allow_html=True)
-st.markdown('<div class="section-box" style="text-align:center; letter-spacing:0.2em; text-transform:uppercase;">Result Analysis and Recommendations</div>', unsafe_allow_html=True)
-
+st.markdown("<div class='section-title' id='analysis'>RESULT ANALYSIS AND RECOMMENDATIONS</div>", unsafe_allow_html=True)
 if not analyze_clicked and not st.session_state.last_result and not st.session_state.last_error:
-    st.markdown('<div class="panel"><div class="panel-inner" style="text-align:center; color:var(--muted)">Upload a soil image and fill in the parameters, then analyze.</div></div>', unsafe_allow_html=True)
+    st.markdown("<div class='custom-card' style='text-align:center;color:#9aa0a6'>Upload a soil image and fill in the parameters, then analyze.</div>", unsafe_allow_html=True)
 
-if analyze_clicked and not img_bytes:
+if analyze_clicked and not st.session_state.img_bytes:
     st.error("Please upload a soil image before analyzing.")
 
-if analyze_clicked and img_bytes:
-    _pil_check = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+if analyze_clicked and st.session_state.img_bytes:
+    _pil_check = Image.open(io.BytesIO(st.session_state.img_bytes)).convert("RGB")
     if not is_soil_image(_pil_check):
         st.error("No soil detected. Please upload a clear soil photograph.")
         st.stop()
@@ -1405,7 +1342,7 @@ if analyze_clicked and img_bytes:
             soil_name, confidence, all_probs, soil_fert, crop_recs, dbg = run_inference(
                 img_model, tab_proj, fusion, xgb_clf, scaler,
                 CLASS_NAMES, NUMERIC_COLS,
-                img_bytes,
+                st.session_state.img_bytes,
                 n, p, k, temp, hum, rain, ph, yld, fert,
                 season, irrig, prev, region,
             )
@@ -1433,71 +1370,45 @@ if st.session_state.last_result:
     crop_recs = res["crop_recs"]
 
     top = crop_recs[0]
-    top_img = "https://lh3.googleusercontent.com/aida-public/AB6AXuB5sOP_w5upSSi1oVtLYbAxHzE38HGUNUPwE-2QHpSLKoAvBYZ05HkbeTebObk5JR6Oia0lIREuGPIJPGmiCsqpsdu0PV3bR7NeN7pNmYKxkiNzcgRoQ3XPP1puoUPiFHW8PLKihoLTW2Oj5YK_PggzfEG3rvfSqPilbfRdodkVyp7DanEglXjT_4vIaErxdz9-lxJkrKOjLwZ8F-HvsJnKE_pMec5QHUyr0f9H3LeA-k-HhYEseTWgVE8zmbXdKAEu4-WGsFl5egk"
+    with st.container():
+        st.markdown("<div id='card-results-hero'></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"""\n<div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;">\n  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5sOP_w5upSSi1oVtLYbAxHzE38HGUNUPwE-2QHpSLKoAvBYZ05HkbeTebObk5JR6Oia0lIREuGPIJPGmiCsqpsdu0PV3bR7NeN7pNmYKxkiNzcgRoQ3XPP1puoUPiFHW8PLKihoLTW2Oj5YK_PggzfEG3rvfSqPilbfRdodkVyp7DanEglXjT_4vIaErxdz9-lxJkrKOjLwZ8F-HvsJnKE_pMec5QHUyr0f9H3LeA-k-HhYEseTWgVE8zmbXdKAEu4-WGsFl5egk" style="width:100%;border-radius:10px"/>\n  <div>\n    <div style="font-size:10px;letter-spacing:0.2em;color:#9aa0a6">RANK #1 HIGHLY RECOMMENDED</div>\n    <div style="display:flex;justify-content:space-between;align-items:center">\n      <div style="font-size:28px;font-weight:800">{top['name']}</div>\n      <div style="background:#E6F7ED;padding:6px 10px;border-radius:10px;font-weight:700">{confidence:.0f}% Match</div>\n    </div>\n    <p style="color:#6B7280">Based on your soil's properties, {top['name']} is ideal for the upcoming {season} season.</p>\n    <div class="custom-card" style="background:#F7F8FA;border:0">\n      <div style="font-weight:700">Scientific Fertilizer Plan</div>\n      <div>Type: {top['fertilizer']}</div>\n      <div>Ratio: {top['npk']}</div>\n    </div>\n  </div>\n</div>\n""",\n            unsafe_allow_html=True,\n        )
 
-    st.markdown(
-        f"""
-        <div class="result-hero" style="display:grid; grid-template-columns: 1.2fr 1.6fr; gap:16px;">
-          <img src="{top_img}" style="width:100%; height:220px; object-fit:cover; border-radius:10px"/>
-          <div>
-            <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); font-weight:700">Rank #1 Highly Recommended</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px">
-              <div style="font-size:28px; font-weight:800">{top['name']}</div>
-              <div style="background: color-mix(in srgb, var(--primary) 10%, transparent); padding:8px 12px; border-radius:12px; font-weight:800">{confidence:.0f}%</div>
-            </div>
-            <div style="font-size:12px; color:var(--muted); margin:8px 0">
-              Based on your soil's properties, {top['name']} is ideal for the upcoming {season} season in the {region} region.
-            </div>
-            <div class="panel-inner">
-              <div style="font-weight:700; margin-bottom:6px">Scientific Fertilizer Plan</div>
-              <div style="display:flex; gap:16px; font-size:12px">
-                <div><div style="color:var(--muted); font-size:10px">Recommended Type</div><strong>{top['fertilizer']}</strong></div>
-                <div><div style="color:var(--muted); font-size:10px">Ratio (N:P:K)</div><strong>{top['npk'].replace('kg/ha','').strip()}</strong></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with st.container():
+        st.markdown("<div id='card-results-chart'></div>", unsafe_allow_html=True)
+        st.markdown("<h4>Soil Probability Breakdown</h4>", unsafe_allow_html=True)
+        labels = list(all_probs.keys())
+        values = [all_probs[k] for k in labels]
+        fig = go.Figure(
+            go.Bar(
+                x=values,
+                y=labels,
+                orientation="h",
+                marker_color="#1E5631",
+            )
+        )
+        fig.update_layout(
+            height=260,
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(showgrid=False, ticksuffix="%", zeroline=False),
+            yaxis=dict(autorange="reversed"),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-    # Plotly probabilities
-    sorted_probs = sorted(all_probs.items(), key=lambda x: -x[1])
-    fig = go.Figure(go.Bar(
-        x=[p for _, p in sorted_probs],
-        y=[s for s, _ in sorted_probs],
-        orientation="h",
-        marker_color="#2d6a4f"
-    ))
-    fig.update_layout(
-        height=240,
-        margin=dict(l=20, r=20, t=10, b=10),
-        xaxis_title="%",
-        yaxis_title="",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#6a726d")
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    r2, r3 = st.columns(2)
+    with r2:
+        if len(crop_recs) > 1:
+            c2 = crop_recs[1]
+            st.markdown("<div id='card-results-2'></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"""\n<div style="display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;">\n  <img src="https://images.unsplash.com/photo-1446057032654-9d8885db76c6?auto=format&fit=crop&w=300&q=80" style="width:96px;height:96px;border-radius:10px;object-fit:cover"/>\n  <div>\n    <div style="font-size:10px;letter-spacing:0.2em;color:#9aa0a6">RANK #2</div>\n    <div style="display:flex;justify-content:space-between;align-items:center">\n      <div style="font-size:18px;font-weight:800">{c2['name']}</div>\n      <div style="background:#EAF2FF;padding:4px 8px;border-radius:999px;font-weight:700;font-size:11px">82% Match</div>\n    </div>\n    <div style="color:#6B7280;font-size:12px">Strong resilience</div>\n  </div>\n</div>\n""",\n                unsafe_allow_html=True,\n            )
+    with r3:
+        if len(crop_recs) > 2:
+            c3 = crop_recs[2]
+            st.markdown("<div id='card-results-3'></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"""\n<div style="display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;">\n  <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=300&q=80" style="width:96px;height:96px;border-radius:10px;object-fit:cover"/>\n  <div>\n    <div style="font-size:10px;letter-spacing:0.2em;color:#9aa0a6">RANK #3</div>\n    <div style="display:flex;justify-content:space-between;align-items:center">\n      <div style="font-size:18px;font-weight:800">{c3['name']}</div>\n      <div style="background:#EAF2FF;padding:4px 8px;border-radius:999px;font-weight:700;font-size:11px">75% Match</div>\n    </div>\n    <div style="color:#6B7280;font-size:12px">Good market value</div>\n  </div>\n</div>\n""",\n                unsafe_allow_html=True,\n            )
 
-    # Secondary cards
-    if len(crop_recs) > 1:
-        cols = st.columns(2, gap="large")
-        for i, crop in enumerate(crop_recs[1:3]):
-            with cols[i % 2]:
-                st.markdown(
-                    f"""
-                    <div class="result-card" style="display:flex; gap:12px; align-items:center;">
-                      <div style="width:80px; height:60px; background: var(--surface-container-low); border-radius:8px"></div>
-                      <div>
-                        <div style="font-size:10px; color:var(--muted); letter-spacing:0.15em; text-transform:uppercase">Rank #{crop['rank']}</div>
-                        <div style="font-weight:700">{crop['name']}</div>
-                        <div style="font-size:11px; color:var(--muted)">{crop['fertilizer']}</div>
-                      </div>
-                      <div style="margin-left:auto; font-size:11px; font-weight:700; color:var(--secondary)">{82 if crop['rank']==2 else 75}% Match</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-st.markdown('</div>', unsafe_allow_html=True)
