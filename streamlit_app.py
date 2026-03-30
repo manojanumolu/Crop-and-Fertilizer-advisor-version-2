@@ -1209,6 +1209,74 @@ div.stButton > button {
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
+
+/* Form labels */
+div[data-testid="stNumberInput"] label,
+div[data-testid="stSelectbox"] label,
+div[data-testid="stTextInput"] label {
+  font-size: 10px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6a726d !important;
+  font-weight: 700 !important;
+}
+
+/* Inputs */
+div[data-testid="stNumberInput"] input,
+div[data-testid="stTextInput"] input {
+  background: #f5f3f0 !important;
+  border: 1px solid #e6e3df !important;
+  border-radius: 8px !important;
+  height: 38px !important;
+  padding: 6px 10px !important;
+}
+
+div[data-testid="stSelectbox"] div[role="combobox"] {
+  background: #f5f3f0 !important;
+  border: 1px solid #e6e3df !important;
+  border-radius: 8px !important;
+  min-height: 38px !important;
+}
+
+/* File uploader */
+div[data-testid="stFileUploader"] {
+  border: 2px dashed #d7d3ce !important;
+  border-radius: 12px !important;
+  background: #faf8f5 !important;
+  padding: 12px !important;
+}
+div[data-testid="stFileUploader"] section {
+  padding: 0 !important;
+}
+div[data-testid="stFileUploader"] button {
+  background: #ffffff !important;
+  color: #1b1c1a !important;
+  border: 1px solid #e6e3df !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Buttons */
+button[data-testid="baseButton-primary"] {
+  background: #0f5238 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+}
+button[data-testid="baseButton-secondary"] {
+  background: #ffffff !important;
+  color: #2d6a4f !important;
+  border: 1px solid #d7d3ce !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+}
+
+/* Images */
+div[data-testid="stImage"] img {
+  border-radius: 12px !important;
+}
 </style>
 """
 
@@ -1298,12 +1366,15 @@ with main_col:
     with chem_col:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title"><span class="material-symbols-outlined">science</span> Soil Chemical Properties</div>', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
+        r1c1, r1c2 = st.columns(2)
+        with r1c1:
             n  = st.number_input("Nitrogen (N) mg/kg", 0.0, 200.0, 90.0, step=1.0)
-            k  = st.number_input("Potassium (K) mg/kg", 0.0, 200.0, 43.0, step=1.0)
-        with c2:
+        with r1c2:
             p  = st.number_input("Phosphorus (P) mg/kg", 0.0, 200.0, 42.0, step=1.0)
+        r2c1, r2c2 = st.columns(2)
+        with r2c1:
+            k  = st.number_input("Potassium (K) mg/kg", 0.0, 200.0, 43.0, step=1.0)
+        with r2c2:
             ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01)
         st.markdown('</div>', unsafe_allow_html=True)
 
