@@ -264,6 +264,15 @@ CROP_FERT_MAP = {
     "Wheat":     {"fertilizer": "Urea + DAP",    "npk": "120:60:40 kg/ha"},
 }
 
+SOIL_COLORS = {
+    "Alluvial Soil": "#a87c4f",
+    "Black Soil":    "#2f2f2f",
+    "Clay Soil":     "#8b5e34",
+    "Laterite Soil": "#7a2f2f",
+    "Red Soil":      "#b6422b",
+    "Yellow Soil":   "#d0a200",
+}
+
 CROP_MAP = {
     ("Red Soil",      "Kharif"): ["Cotton",    "Maize",      "Groundnut",  "Tomato"],
     ("Red Soil",      "Rabi")  : ["Wheat",     "Sunflower",  "Linseed",    "Potato"],
