@@ -47,12 +47,18 @@ if st.session_state.theme == "dark":
   --surface: #1d1d1d;
   --surface-2: #202020;
   --surface-3: #262626;
+  --surface-container-low: #202020;
+  --surface-container-lowest: #262626;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #2f2f2f;
   --outline: #2f2f2f;
   --text: #f1f1f1;
   --muted: #b5b5b5;
   --primary: #3fbf7f;
   --primary-2: #2d6a4f;
   --secondary: #6aa2d8;
+  --secondary-fixed: #2b3f5a;
+  --on-secondary-fixed-variant: #cfe3ff;
   --tertiary: #a56b6d;
   --danger: #ff6b6b;
 }
@@ -64,12 +70,18 @@ else:
   --surface: #ffffff;
   --surface-2: #f5f3f0;
   --surface-3: #efeeeb;
-  --outline: #e4e2df;
+  --surface-container-low: #f5f3f0;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #eae8e5;
+  --surface-container-highest: #e4e2df;
+  --outline: #bfc9c1;
   --text: #1b1c1a;
   --muted: #6a726d;
   --primary: #0f5238;
   --primary-2: #2d6a4f;
   --secondary: #3c6184;
+  --secondary-fixed: #cee5ff;
+  --on-secondary-fixed-variant: #224a6b;
   --tertiary: #713638;
   --danger: #ff4d4f;
 }
