@@ -25,8 +25,17 @@ if "img_bytes" not in st.session_state:
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
 if "last_error" not in st.session_state:
+if "auto_temp" not in st.session_state:
+    st.session_state.auto_temp = 27.2
+if "auto_hum" not in st.session_state:
+    st.session_state.auto_hum = 75.3
+if "auto_rain" not in st.session_state:
+    st.session_state.auto_rain = 1352.7
+if "location_name" not in st.session_state:
+    st.session_state.location_name = ""
+if "location_note" not in st.session_state:
+    st.session_state.location_note = ""
     st.session_state.last_error = None
-
 # ── Paths ──────────────────────────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
 def mpath(n): return os.path.join(BASE, n)
