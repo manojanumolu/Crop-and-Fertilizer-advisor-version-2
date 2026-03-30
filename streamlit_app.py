@@ -3,6 +3,7 @@
 # Run: streamlit run streamlit_app.py
 
 import io, os, json, pickle
+import requests
 import numpy as np, pandas as pd
 import torch, torch.nn as nn
 import xgboost as xgb
@@ -458,6 +459,72 @@ def is_soil_image(pil_img):
 
 
 # ══════════════════════════════════════════════════════════════
+# CLIMATE DATA FETCHER
+# ══════════════════════════════════════════════════════════════
+
+def get_climate_data(city_name):
+    try:
+        geo_url = (
+            "https://geocoding-api.open-meteo.com"
+            "/v1/search"
+            f"?name={city_name}"
+            "&count=1&language=en&format=json"
+        )
+        geo_resp = requests.get(geo_url, timeout=10)
+        geo_data = geo_resp.json()
+
+        if not geo_data.get("results"):
+            return None, "City not found. Try a bigger nearby city."
+
+        result = geo_data["results"][0]
+        lat = result["latitude"]
+        lon = result["longitude"]
+        location_name = result["name"]
+        country = result.get("country", "")
+
+        climate_url = (
+            "https://archive-api.open-meteo.com"
+            "/v1/archive"
+            f"?latitude={lat}&longitude={lon}"
+            "&start_date=2014-01-01"
+            "&end_date=2023-12-31"
+            "&daily=temperature_2m_mean"
+            ",precipitation_sum"
+            ",relative_humidity_2m_mean"
+            "&timezone=Asia%2FKolkata"
+        )
+        climate_resp = requests.get(climate_url, timeout=30)
+        climate_data = climate_resp.json()
+
+        daily = climate_data.get("daily", {})
+        temps = [t for t in daily.get("temperature_2m_mean", []) if t is not None]
+        hums  = [h for h in daily.get("relative_humidity_2m_mean", []) if h is not None]
+        rains = daily.get("precipitation_sum", [])
+
+        avg_temp = round(sum(temps) / len(temps), 1) if temps else 25.0
+        avg_hum  = round(sum(hums) / len(hums), 1) if hums else 60.0
+
+        valid_rains = [r for r in rains if r is not None]
+        total_rain  = sum(valid_rains)
+        years       = len(valid_rains) / 365
+        annual_rain = round(total_rain / years, 1) if years > 0 else 1000.0
+
+        return {
+            "location":    f"{location_name}, {country}",
+            "lat":         lat,
+            "lon":         lon,
+            "temperature": avg_temp,
+            "humidity":    avg_hum,
+            "rainfall":    annual_rain,
+        }, None
+
+    except requests.exceptions.Timeout:
+        return None, "Request timed out. Please try again."
+    except Exception as e:
+        return None, f"Error fetching data: {str(e)}"
+
+
+# ══════════════════════════════════════════════════════════════
 # UI CONSTANTS
 # ══════════════════════════════════════════════════════════════
 
@@ -528,10 +595,64 @@ except Exception as _load_err:
         st.write(f"- `{_fn}`: {_info['mb']:.1f} MB  —  {_ico}")
     st.stop()
 
+if "auto_temp" not in st.session_state:
+    st.session_state.auto_temp = 25.7
+if "auto_hum" not in st.session_state:
+    st.session_state.auto_hum = 58.2
+if "auto_rain" not in st.session_state:
+    st.session_state.auto_rain = 1619.0
+if "location_name" not in st.session_state:
+    st.session_state.location_name = ""
+
 left, right = st.columns([1, 1], gap="large")
 
 # ── LEFT: Inputs ───────────────────────────────────────────────
 with left:
+
+    # Section: Auto Climate Data
+    st.markdown("""
+    <div style="background:#E8F5E9; border-left:4px solid #2E7D32;
+    border-radius:12px; padding:16px; margin-bottom:16px">
+    <h4 style="color:#1B5E20; margin:0 0 4px 0">🌍 Auto-Fill Climate Data</h4>
+    <p style="color:#555; font-size:13px; margin:0">
+    Enter your location to automatically fill Temperature, Humidity and Rainfall fields
+    </p></div>
+    """, unsafe_allow_html=True)
+
+    city_col, btn_col = st.columns([3, 1])
+    with city_col:
+        city_input = st.text_input(
+            "Enter your city or district",
+            placeholder="e.g. Hyderabad, Warangal, Guntur",
+            label_visibility="collapsed",
+        )
+    with btn_col:
+        fetch_btn = st.button("🌤️ Fetch", use_container_width=True)
+
+    if fetch_btn and city_input:
+        with st.spinner(f"Fetching climate data for {city_input}..."):
+            climate, error = get_climate_data(city_input)
+        if error:
+            st.error(f"❌ {error}")
+        else:
+            st.session_state.auto_temp = climate["temperature"]
+            st.session_state.auto_hum  = climate["humidity"]
+            st.session_state.auto_rain = climate["rainfall"]
+            st.session_state.location_name = climate["location"]
+            st.success(f"✅ Climate data loaded for {climate['location']}")
+            st.rerun()
+
+    if st.session_state.location_name:
+        st.markdown(f"""
+        <div style="background:#F1F8E9; border-radius:8px; padding:10px 14px;
+        margin-bottom:8px; font-size:13px; color:#2E7D32">
+        📍 <strong>{st.session_state.location_name}</strong>
+        — 10-year climate averages loaded<br>
+        🌡️ {st.session_state.auto_temp}°C &nbsp;|&nbsp;
+        💧 {st.session_state.auto_hum}% &nbsp;|&nbsp;
+        🌧️ {st.session_state.auto_rain} mm/year
+        </div>
+        """, unsafe_allow_html=True)
 
     # Section: Soil Image
     st.markdown("""
@@ -581,14 +702,17 @@ with left:
     """, unsafe_allow_html=True)
     e1, e2, e3 = st.columns(3)
     with e1:
-        temp = st.number_input("Temperature", 0.0, 50.0, 25.0, step=0.1,
-                               help="°C (Celsius) | Range: 10-45°C")
+        temp = st.number_input("Temperature", 10.0, 45.0,
+                               float(st.session_state.auto_temp), step=0.1,
+                               help="°C (Celsius) | Range: 10-45°C | Auto-filled from location")
     with e2:
-        hum  = st.number_input("Humidity", 0.0, 100.0, 80.0, step=1.0,
-                               help="% Relative humidity | Range: 14-100%")
+        hum  = st.number_input("Humidity", 14.0, 100.0,
+                               float(st.session_state.auto_hum), step=0.1,
+                               help="% Relative humidity | Range: 14-100% | Auto-filled from location")
     with e3:
-        rain = st.number_input("Rainfall", 0.0, 3000.0, 200.0, step=5.0,
-                               help="mm per year | Range: 20-2500 mm")
+        rain = st.number_input("Rainfall", 200.0, 3000.0,
+                               float(st.session_state.auto_rain), step=1.0,
+                               help="mm per year | Range: 20-2500 mm | Auto-filled from location")
 
     # Section: Farm History
     st.markdown("""
