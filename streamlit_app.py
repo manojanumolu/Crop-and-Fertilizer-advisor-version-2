@@ -562,12 +562,16 @@ with left:
     """, unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
-        n  = st.number_input("Nitrogen (N)",  0.0, 200.0,  90.0, step=1.0)
+        n  = st.number_input("Nitrogen - N", 0.0, 200.0, 90.0, step=1.0,
+                             help="kg/ha (kilograms per hectare) | Range: 0-140")
     with c2:
-        p  = st.number_input("Phosphorus (P)", 0.0, 200.0,  42.0, step=1.0)
+        p  = st.number_input("Phosphorus - P", 0.0, 200.0, 42.0, step=1.0,
+                             help="kg/ha (kilograms per hectare) | Range: 0-145")
     with c3:
-        k  = st.number_input("Potassium (K)",  0.0, 200.0,  43.0, step=1.0)
-    ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01)
+        k  = st.number_input("Potassium - K", 0.0, 200.0, 43.0, step=1.0,
+                             help="kg/ha (kilograms per hectare) | Range: 0-205")
+    ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01,
+                         help="Acidity level | Range: 3.5 to 9.5")
 
     # Section: Environmental Conditions
     st.markdown("""
@@ -577,11 +581,14 @@ with left:
     """, unsafe_allow_html=True)
     e1, e2, e3 = st.columns(3)
     with e1:
-        temp = st.number_input("Temperature (°C)", 0.0,  50.0, 25.0, step=0.1)
+        temp = st.number_input("Temperature", 0.0, 50.0, 25.0, step=0.1,
+                               help="°C (Celsius) | Range: 10-45°C")
     with e2:
-        hum  = st.number_input("Humidity (%)",     0.0, 100.0, 80.0, step=1.0)
+        hum  = st.number_input("Humidity", 0.0, 100.0, 80.0, step=1.0,
+                               help="% Relative humidity | Range: 14-100%")
     with e3:
-        rain = st.number_input("Rainfall (mm)",    0.0, 3000.0, 200.0, step=5.0)
+        rain = st.number_input("Rainfall", 0.0, 3000.0, 200.0, step=5.0,
+                               help="mm per year | Range: 20-2500 mm")
 
     # Section: Farm History
     st.markdown("""
@@ -589,11 +596,17 @@ with left:
     <h4 class="section-title">📊 Farm History</h4>
     </div>
     """, unsafe_allow_html=True)
+    st.info("""💡 **Unit Guide for Indian Farmers:**
+- NPK & Fertilizer: kg/ha (1 acre = 0.4 hectare)
+- To convert: multiply your per-acre value × 2.47 to get per-hectare value
+- Yield: t/ha (tonnes per hectare)""")
     h1, h2 = st.columns(2)
     with h1:
-        yld  = st.number_input("Yield Last Season", 0.0, 15000.0, 2500.0, step=10.0)
+        yld  = st.number_input("Yield Last Season", 0.0, 15000.0, 2500.0, step=10.0,
+                               help="t/ha = tonnes per hectare | 1 acre ≈ 0.4 ha | Range: 0.5-10 t/ha")
     with h2:
-        fert = st.number_input("Fertilizer Used",   0.0,  1000.0,  120.0, step=5.0)
+        fert = st.number_input("Fertilizer Used", 0.0, 1000.0, 120.0, step=5.0,
+                               help="kg/ha = kilograms per hectare | 1 acre ≈ 0.4 ha | Range: 50-500 kg/ha")
 
     # Section: Farm Details
     st.markdown("""
@@ -761,9 +774,10 @@ with right:
           <p style="margin:4px 0"><strong>Type:</strong>
           {soil_fert["fertilizer"]}</p>
           <p style="margin:4px 0"><strong>NPK Dosage:</strong>
-          {soil_fert["npk"]}</p>
+          {soil_fert["npk"]} kg/ha</p>
         </div>
         """, unsafe_allow_html=True)
+        st.caption("1 hectare = 2.47 acres | Divide kg/ha by 2.47 to get kg/acre")
 
         with st.expander("Prediction Debug"):
             st.write("Raw probs:", dbg["probs"])
