@@ -19,98 +19,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Theme state ────────────────────────────────────────────────
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
+# ?? Session state ???????????????????????????????????????????
 if "img_bytes" not in st.session_state:
     st.session_state.img_bytes = None
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
 if "last_error" not in st.session_state:
     st.session_state.last_error = None
-
-# ── Theme CSS definitions ───────────────────────────────────────
-_BASE_CSS = """
-<style>
-  #MainMenu, footer, header { visibility: hidden; }
-  .block-container { padding: 0 2rem 2rem; max-width: 1200px; }
-  h1, h2, h3, h4 { font-family: 'Segoe UI', sans-serif; }
-  .hero h1, .hero p { color: #ffffff !important; }
-  .section-card { background: var(--section-bg); padding: 16px; border-radius: 12px;
-                  border-left: 4px solid var(--accent); margin-bottom: 16px; }
-  .section-title { color: var(--section-title); margin: 0 0 10px 0; }
-  div.stButton > button {
-    background: #2E7D32; color: white; border: none;
-    padding: 14px 48px; font-size: 18px; font-weight: 600;
-    border-radius: 30px; width: 100%; cursor: pointer;
-    margin-top: 16px; transition: background 0.2s;
-    white-space: nowrap !important;
-  }
-  div.stButton > button:hover { background: #1B5E20; }
-  /* Theme toggle button — override width/padding for compact size */
-  div[data-testid="column"]:last-child div.stButton > button {
-    min-width: 90px !important;
-    padding: 8px 16px !important;
-    font-size: 14px !important;
-    width: auto !important;
-    margin-top: 0 !important;
-    white-space: nowrap !important;
-    text-align: left !important;
-  }
-  @media (max-width: 768px) {
-    div[data-testid="column"]:last-child {
-      display: flex;
-      justify-content: flex-start;
-    }
-    div[data-testid="column"]:last-child div.stButton {
-      width: 100%;
-    }
-  }
-</style>
-"""
-
-LIGHT_THEME = _BASE_CSS + """
-<style>
-  :root { --card-bg: #FFFFFF; --card-border: #E8F5E9; --text: #212121;
-          --subtext: #555; --page-bg: #F9FBF9; --section-bg: #E8F5E9;
-          --section-title: #1B5E20; --accent: #2E7D32;
-          --prob-track: #f0f0f0; --prob-label: #333; --fert-bg: #FFF8E1; }
-  .main, .stApp { background: #F9FBF9 !important; }
-  h1,h2,h3,h4,p { color: #212121; }
-  .stSelectbox label, .stNumberInput label { color: #1B5E20 !important; font-weight: 500; }
-  div[data-testid="stFileUploader"] {
-    border: 2px dashed #2E7D32; border-radius: 12px;
-    background: #F1F8E9; padding: 8px;
-  }
-</style>
-"""
-
-DARK_THEME = _BASE_CSS + """
-<style>
-  :root { --card-bg: #1E1E1E; --card-border: #2E2E2E; --text: #FFFFFF;
-          --subtext: #AAAAAA; --page-bg: #121212; --section-bg: #1A2A1A;
-          --section-title: #E7F7E7; --accent: #81C784;
-          --prob-track: #2C2C2C; --prob-label: #CCCCCC; --fert-bg: #2A2000; }
-  .main, .stApp { background: #121212 !important; }
-  h1,h2,h3,h4,p,label,span { color: #FFFFFF !important; }
-  .stSelectbox label, .stNumberInput label { color: #81C784 !important; font-weight: 500; }
-  div[data-testid="stFileUploader"] {
-    border: 2px dashed #4CAF50; border-radius: 12px;
-    background: #1A2A1A; padding: 8px;
-  }
-  div[data-testid="stNumberInput"] input,
-  .stTextInput input { background: #2C2C2C !important; color: #FFFFFF !important; }
-  .stSelectbox > div > div { background: #2C2C2C !important; color: #FFFFFF !important; }
-  div[data-testid="stExpander"] { background: #1E1E1E !important; }
-  .stSlider { filter: brightness(1.4); }
-</style>
-"""
-
-# Apply theme
-if st.session_state.theme == "dark":
-    st.markdown(DARK_THEME, unsafe_allow_html=True)
-else:
-    st.markdown(LIGHT_THEME, unsafe_allow_html=True)
 
 # ── Paths ──────────────────────────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -1103,181 +1018,297 @@ def get_climate_data(village, district, state):
 
 
 # ══════════════════════════════════════════════════════════════
-# UI CONSTANTS
-# ══════════════════════════════════════════════════════════════
 
-SOIL_COLORS = {
-    "Red Soil":      "#C62828",
-    "Black Soil":    "#212121",
-    "Alluvial Soil": "#795548",
-    "Clay Soil":     "#FF8F00",
-    "Laterite Soil": "#BF360C",
-    "Yellow Soil":   "#F9A825",
-    "Sandy Soil":    "#F4E409",
-}
-
-CROP_ICONS = {
-    "Cotton":       "🌿", "Maize":      "🌽", "Rice":       "🌾",
-    "Wheat":        "🌾", "Sugarcane":  "🎋", "Potato":     "🥔",
-    "Tomato":       "🍅", "Groundnut":  "🥜", "Soybean":    "🫘",
-    "Sunflower":    "🌻", "Barley":     "🌾", "Mustard":    "🌼",
-    "Chickpea":     "🫘", "Watermelon": "🍉", "Cucumber":   "🥒",
-    "Pumpkin":      "🎃", "Mango":      "🥭", "Banana":     "🍌",
-    "Cashew":       "🌰", "Rubber":     "🌳", "Tea":        "🍵",
-    "Coffee":       "☕", "Tapioca":    "🌿", "Turmeric":   "🟡",
-    "Ginger":       "🫚", "Pineapple":  "🍍", "Jackfruit":  "🍈",
-    "Jute":         "🌿", "Sorghum":    "🌾", "Sesame":     "🌿",
-    "Linseed":      "🌼", "Safflower":  "🌼", "Moong":      "🫘",
-    "Taro":         "🌿", "Spinach":    "🥬", "Muskmelon":  "🍈",
-}
-
-
-# ══════════════════════════════════════════════════════════════
 # UI
-# ══════════════════════════════════════════════════════════════
+CUSTOM_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200');
 
-# ── Header + theme toggle ───────────────────────────────────────
-_hcol1, _hcol2 = st.columns([8, 1])
-with _hcol1:
-    st.markdown("""
-    <div class="hero" style="background:#1B5E20; color:white; padding:1.5rem 2rem;
-    border-radius:16px; margin-bottom:1rem; text-align:center">
-      <h1 style="margin:0; font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; color:white !important">
-        🌱 Multimodal Crop &amp; Fertilizer Recommendation</h1>
-      <p style="margin:0.4rem 0 0; font-size:0.95rem; opacity:0.85; color:white !important">
-        AI-powered soil analysis for smarter farming</p>
-    </div>
-    """, unsafe_allow_html=True)
-with _hcol2:
-    st.markdown("<div style='padding-top:12px'></div>", unsafe_allow_html=True)
-    _btn_label = "🌙 Dark" if st.session_state.theme == "light" else "☀️ Light"
-    if st.button(_btn_label, key="theme_toggle"):
-        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-        st.rerun()
+:root {
+  --bg: #fbf9f6;
+  --surface: #ffffff;
+  --surface-2: #f5f3f0;
+  --surface-3: #efeeeb;
+  --outline: #bfc9c1;
+  --text: #1b1c1a;
+  --muted: #6a726d;
+  --primary: #0f5238;
+  --primary-2: #2d6a4f;
+  --secondary: #3c6184;
+  --tertiary: #713638;
+}
 
-# ── Load models ────────────────────────────────────────────────
-try:
-    img_model, tab_proj, fusion, xgb_clf, scaler, CLASS_NAMES, NUMERIC_COLS = load_all_models()
-    _models_ok = True
-except Exception as _load_err:
-    _models_ok = False
-    st.error(
-        f"**Model loading failed:** {_load_err}\n\n"
-        f"This usually means Git LFS files were not pulled. "
-        f"Run `git lfs pull` in the repo and redeploy."
+html, body, [class*="css"] {
+  font-family: "Inter", sans-serif;
+  color: var(--text);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Manrope", sans-serif;
+  color: var(--text);
+}
+
+.stApp, .main {
+  background: var(--bg) !important;
+}
+
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1rem; max-width: 1400px; }
+
+.nav-card {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 24px 16px;
+  height: 100%;
+}
+
+.nav-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+}
+
+.nav-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.nav-link.active {
+  background: #ffffff80;
+  color: var(--primary);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #ffffffcc;
+  border: 1px solid #e6e3df;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid #ece9e5;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.card.soft {
+  background: var(--surface-3);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.unit-card {
+  border-left: 4px solid var(--secondary);
+  background: #cee5ff40;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0e5138;
+  background: #b1f0ce4d;
+  border: 1px solid #95d4b333;
+  margin-right: 8px;
+}
+
+.result-title {
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #8b938d;
+  letter-spacing: 0.15em;
+  margin: 10px 0 16px;
+  text-align: center;
+}
+
+div.stButton > button {
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 12px 18px;
+}
+
+.stFileUploader { border-radius: 12px; }
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+</style>
+"""
+
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+nav_col, main_col = st.columns([1, 4], gap="large")
+
+with nav_col:
+    st.markdown(
+        """
+        <div class="nav-card">
+          <div class="nav-title">The Sanctuary</div>
+          <div class="nav-sub">Scientific Advisor</div>
+          <div style="margin-top:16px">
+            <div class="nav-link">eco Context</div>
+            <div class="nav-link active">psychology Inputs</div>
+            <div class="nav-link">analytics Analysis</div>
+          </div>
+          <div style="margin-top:24px; border-top:1px solid #e6e3df; padding-top:12px">
+            <div class="nav-link">settings Settings</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown("**File status at startup:**")
-    for _fn, _info in _file_status.items():
-        _ok  = _info["exists"] and _info["mb"] > 0.1
-        _ico = "OK" if _ok else "MISSING / TOO SMALL"
-        st.write(f"- `{_fn}`: {_info['mb']:.1f} MB  —  {_ico}")
-    st.stop()
 
-if "auto_temp" not in st.session_state:
-    st.session_state.auto_temp = 25.7
-if "auto_hum" not in st.session_state:
-    st.session_state.auto_hum = 58.2
-if "auto_rain" not in st.session_state:
-    st.session_state.auto_rain = 1619.0
-if "location_name" not in st.session_state:
-    st.session_state.location_name = ""
-if "location_note" not in st.session_state:
-    st.session_state.location_note = ""
-
-left, right = st.columns([1, 1], gap="large")
-
-# ── LEFT: Inputs ───────────────────────────────────────────────
-with left:
-
-    # Section: Soil Image
-    st.markdown("""
-    <div class="section-card">
-    <h4 class="section-title">📷 Soil Image</h4>
-    </div>
-    """, unsafe_allow_html=True)
-    uploaded = st.file_uploader(
-        "Upload soil photo (JPEG or PNG)",
-        type=["jpg", "jpeg", "png"],
-        label_visibility="collapsed",
-    )
-    st.info("💡 Tip: Upload a clear close-up photo of soil for best results. "
-            "Avoid photos with people, plants, or bright objects.")
-    if uploaded:
-        st.session_state.img_bytes = uploaded.getvalue()
-        st.session_state.last_result = None
-        st.session_state.last_error = None
-    img_bytes = st.session_state.img_bytes
-    if img_bytes:
-        st.image(io.BytesIO(img_bytes), use_container_width=True)
-
-    # Section: Soil Chemical Properties
-    st.markdown("""
-    <div class="section-card" style="margin:16px 0 8px 0">
-    <h4 class="section-title">🧪 Soil Chemical Properties</h4>
-    </div>
-    """, unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        n  = st.number_input("Nitrogen - N", 0.0, 200.0, 90.0, step=1.0,
-                             help="kg/ha (kilograms per hectare) | Range: 0-140")
-    with c2:
-        p  = st.number_input("Phosphorus - P", 0.0, 200.0, 42.0, step=1.0,
-                             help="kg/ha (kilograms per hectare) | Range: 0-145")
-    with c3:
-        k  = st.number_input("Potassium - K", 0.0, 200.0, 43.0, step=1.0,
-                             help="kg/ha (kilograms per hectare) | Range: 0-205")
-    ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01,
-                         help="Acidity level | Range: 3.5 to 9.5")
-
-    # Section: Environmental Conditions
-    st.markdown("""
-    <div class="section-card" style="margin:16px 0 8px 0">
-    <h4 class="section-title">🌡️ Environmental Conditions</h4>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="background:#E8F5E9; border-left:4px solid #2E7D32;
-    border-radius:12px; padding:16px; margin-bottom:12px">
-    <h4 style="color:#1B5E20; margin:0 0 4px 0">🌍 Auto-Fill Climate Data</h4>
-    <p style="color:#555; font-size:13px; margin:0">
-    Select your location to auto-fill Temperature, Humidity and Rainfall
-    </p></div>
-    """, unsafe_allow_html=True)
-
-    sel_state = st.selectbox(
-        "📍 Select Your State",
-        options=["-- Select State --"] + sorted(INDIA_STATES_DISTRICTS.keys()),
-        index=0,
+with main_col:
+    st.markdown(
+        """
+        <div class="topbar">
+          <div style="font-weight:700; color:#2d6a4f">Scientific Sanctuary</div>
+          <div style="display:flex; gap:12px; align-items:center; color:#6a726d">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="material-symbols-outlined">settings</span>
+            <span class="material-symbols-outlined">account_circle</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    if sel_state and sel_state != "-- Select State --":
-        sel_district = st.selectbox(
-            "🏛️ Select Your District",
-            options=["-- Select District --"] + INDIA_STATES_DISTRICTS[sel_state],
+    header_left, header_right = st.columns([2.2, 1], gap="large")
+    with header_left:
+        st.markdown(
+            """
+            <h1 style="font-size:40px; font-weight:800; margin-bottom:8px">Precise Agricultural Intelligence</h1>
+            <p style="color:#6a726d; margin-top:0">
+              Seamlessly integrate soil data, chemical properties, and atmospheric conditions to unlock maximum potential yield.
+            </p>
+            """,
+            unsafe_allow_html=True,
+        )
+    with header_right:
+        st.markdown(
+            """
+            <div class="card unit-card">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.2em; color:#224a6b; font-weight:800">Farmer Unit Guide</div>
+              <div style="margin-top:10px; font-size:13px; color:#224a6b">
+                <div style="display:flex; justify-content:space-between"><span>Yield:</span><strong>t/ha</strong></div>
+                <div style="display:flex; justify-content:space-between"><span>NPK:</span><strong>kg/ha</strong></div>
+                <div style="display:flex; justify-content:space-between"><span>Area:</span><strong>1 acre = 0.4 ha</strong></div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    img_col, chem_col = st.columns([1.2, 1.6], gap="large")
+
+    with img_col:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"><span class="material-symbols-outlined">image</span> Soil Image</div>', unsafe_allow_html=True)
+        uploaded = st.file_uploader(
+            "Upload soil photo (JPG or PNG)",
+            type=["jpg", "jpeg", "png"],
+            label_visibility="collapsed",
+        )
+        if uploaded:
+            st.session_state.img_bytes = uploaded.getvalue()
+            st.session_state.last_result = None
+            st.session_state.last_error = None
+        img_bytes = st.session_state.img_bytes
+        if img_bytes:
+            st.image(io.BytesIO(img_bytes), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with chem_col:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"><span class="material-symbols-outlined">science</span> Soil Chemical Properties</div>', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            n  = st.number_input("Nitrogen (N) mg/kg", 0.0, 200.0, 90.0, step=1.0)
+            k  = st.number_input("Potassium (K) mg/kg", 0.0, 200.0, 43.0, step=1.0)
+        with c2:
+            p  = st.number_input("Phosphorus (P) mg/kg", 0.0, 200.0, 42.0, step=1.0)
+            ph = st.number_input("Soil pH", 3.0, 10.0, 6.5, step=0.01)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card" style="margin-top:16px">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Environmental Conditions</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="card soft" style="margin-bottom:12px">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700">
+            <span class="material-symbols-outlined">location_on</span>
+            Auto-Fill Climate Data
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    ec1, ec2, ec3, ec4 = st.columns([1.2, 1.2, 1.6, 0.8])
+    with ec1:
+        sel_state = st.selectbox(
+            "Select Your State",
+            options=["-- Select State --"] + sorted(INDIA_STATES_DISTRICTS.keys()),
             index=0,
         )
-    else:
-        sel_district = "-- Select District --"
-        st.selectbox("🏛️ Select Your District", options=["-- Select State First --"], disabled=True)
-
-    loc3, loc4 = st.columns([3, 1])
-    with loc3:
-        village = st.text_input("🏘️ Enter Village / Town Name", placeholder="e.g. Kodad, Suryapet, Miryalaguda, Nalgonda...")
-    with loc4:
-        st.markdown("<br>", unsafe_allow_html=True)
-        fetch_btn = st.button("🌤️ Fetch", use_container_width=True)
+    with ec2:
+        if sel_state and sel_state != "-- Select State --":
+            sel_district = st.selectbox(
+                "Select Your District",
+                options=["-- Select District --"] + INDIA_STATES_DISTRICTS[sel_state],
+                index=0,
+            )
+        else:
+            sel_district = "-- Select District --"
+            st.selectbox("Select Your District", options=["-- Select State First --"], disabled=True)
+    with ec3:
+        village = st.text_input("Enter Village / Town", placeholder="e.g. Ramtek")
+    with ec4:
+        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+        fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
 
     if fetch_btn:
         if sel_state == "-- Select State --":
-            st.warning("⚠️ Please select your state")
+            st.warning("Please select your state")
         elif sel_district == "-- Select District --":
-            st.warning("⚠️ Please select your district")
+            st.warning("Please select your district")
         else:
             with st.spinner("Fetching climate data..."):
                 climate, error = get_climate_data(village, sel_district, sel_state)
             if error:
-                st.error(f"❌ {error}")
+                st.error(f"{error}")
             else:
                 st.session_state.auto_temp = climate["temperature"]
                 st.session_state.auto_hum  = climate["humidity"]
@@ -1285,138 +1316,110 @@ with left:
                 st.session_state.location_name = climate["location"]
                 st.session_state.location_note = climate.get("note", "")
                 st.success(
-                    f"✅ {climate['location']} — "
-                    f"{climate.get('note', 'Data loaded')}"
+                    f"{climate['location']} - {climate.get('note', 'Data loaded')}"
                 )
                 st.rerun()
 
     if st.session_state.location_name:
-        st.markdown(f"""
-        <div style="background:#F1F8E9; border-radius:10px; padding:12px 16px;
-        margin:8px 0; border:1px solid #C8E6C9">
-        <p style="margin:0; font-size:13px; color:#1B5E20">
-        <strong>📍 {st.session_state.location_name}</strong></p>
-        <p style="margin:4px 0 0; font-size:12px; color:#888">
-        ℹ️ {st.session_state.location_note}
-        </p>
-        <p style="margin:6px 0 0; font-size:13px; color:#555">
-        🌡️ <strong>{st.session_state.auto_temp}°C</strong> &nbsp;|&nbsp;
-        💧 <strong>{st.session_state.auto_hum}%</strong> &nbsp;|&nbsp;
-        🌧️ <strong>{st.session_state.auto_rain}mm</strong>
-        </p>
-        <p style="margin:4px 0 0; font-size:11px; color:#aaa">
-        10-year averages (2014-2023) • Values auto-filled below ↓
-        </p></div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style="margin-top:8px">
+              <span class="pill">Temperature: {st.session_state.auto_temp} C</span>
+              <span class="pill">Humidity: {st.session_state.auto_hum}%</span>
+              <span class="pill">Rainfall: {st.session_state.auto_rain} mm</span>
+              <span style="color:#8b938d; font-size:11px">Fetched for {st.session_state.location_name}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     e1, e2, e3 = st.columns(3)
     with e1:
-        temp = st.number_input("Temperature", 10.0, 45.0,
-                               float(st.session_state.auto_temp), step=0.1,
-                               help="°C (Celsius) | Range: 10-45°C | Auto-filled from location")
+        temp = st.number_input(
+            "Temperature (C)", 10.0, 45.0,
+            float(st.session_state.auto_temp), step=0.1,
+        )
     with e2:
-        hum  = st.number_input("Humidity", 14.0, 100.0,
-                               float(st.session_state.auto_hum), step=0.1,
-                               help="% Relative humidity | Range: 14-100% | Auto-filled from location")
+        hum = st.number_input(
+            "Humidity (%)", 14.0, 100.0,
+            float(st.session_state.auto_hum), step=0.1,
+        )
     with e3:
-        rain = st.number_input("Rainfall", 200.0, 3000.0,
-                               float(st.session_state.auto_rain), step=1.0,
-                               help="mm per year | Range: 20-2500 mm | Auto-filled from location")
+        rain = st.number_input(
+            "Rainfall (mm)", 200.0, 3000.0,
+            float(st.session_state.auto_rain), step=1.0,
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Section: Farm History
-    st.markdown("""
-    <div class="section-card" style="margin:16px 0 8px 0">
-    <h4 class="section-title">📊 Farm History</h4>
-    </div>
-    """, unsafe_allow_html=True)
-    st.info("""💡 **Unit Guide for Indian Farmers:**
-- NPK & Fertilizer: kg/ha (1 acre = 0.4 hectare)
-- To convert: multiply your per-acre value × 2.47 to get per-hectare value
-- Yield: t/ha (tonnes per hectare)""")
-    h1, h2 = st.columns(2)
-    with h1:
-        yld  = st.number_input("Yield Last Season", 0.0, 15000.0, 2500.0, step=10.0,
-                               help="t/ha = tonnes per hectare | 1 acre ≈ 0.4 ha | Range: 0.5-10 t/ha")
-    with h2:
-        fert = st.number_input("Fertilizer Used", 0.0, 1000.0, 120.0, step=5.0,
-                               help="kg/ha = kilograms per hectare | 1 acre ≈ 0.4 ha | Range: 50-500 kg/ha")
+    fh_col, fd_col = st.columns(2, gap="large")
+    with fh_col:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"><span class="material-symbols-outlined">history</span> Farm History</div>', unsafe_allow_html=True)
+        yld  = st.number_input("Yield Last Season (t/ha)", 0.0, 15000.0, 2500.0, step=10.0)
+        fert = st.number_input("Fertilizer Used (kg/ha)", 0.0, 1000.0, 120.0, step=5.0)
+        st.markdown('<div style="font-size:12px; color:#6a726d">Unit guide: t/ha for yield; kg/ha for fertilizer</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Section: Farm Details
-    st.markdown("""
-    <div class="section-card" style="margin:16px 0 8px 0">
-    <h4 class="section-title">🌾 Farm Details</h4>
-    </div>
-    """, unsafe_allow_html=True)
-    d1, d2 = st.columns(2)
-    with d1:
+    with fd_col:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"><span class="material-symbols-outlined">description</span> Farm Details</div>', unsafe_allow_html=True)
         season = st.selectbox("Season", ["Kharif", "Rabi", "Zaid"])
-        prev   = st.selectbox("Previous Crop",
-                               ["Wheat","Rice","Maize","Cotton","Potato","Sugarcane","Tomato"])
-    with d2:
-        irrig  = st.selectbox("Irrigation", ["Canal","Drip","Rainfed","Sprinkler"])
-        region = st.selectbox("Region", ["South","North","East","West","Central"])
+        irrig  = st.selectbox("Irrigation Type", ["Canal", "Drip", "Rainfed", "Sprinkler"])
+        prev   = st.selectbox("Previous Crop", ["Wheat", "Rice", "Maize", "Cotton", "Potato", "Sugarcane", "Tomato"])
+        region = st.selectbox("Geographic Region", ["South", "Central", "North", "East", "West"])
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    predict_clicked = st.button("🔍 Analyze Soil")
+    act1, act2 = st.columns([1, 1], gap="large")
+    with act1:
+        analyze_clicked = st.button("Analyze Soil and Predict Crop", type="primary", use_container_width=True)
+    with act2:
+        auto_clicked = st.button("Auto-Suggest Levels from Image", type="secondary", use_container_width=True)
 
-# ── RIGHT: Results ─────────────────────────────────────────────
-with right:
-    if not predict_clicked and not st.session_state.last_result and not st.session_state.last_error:
-        st.markdown("""
-        <div style="text-align:center; padding:5rem 2rem;
-        color:#9E9E9E; border:2px dashed #C8E6C9; border-radius:16px;
-        background:var(--card-bg,#FAFFFE)">
-          <div style="font-size:3rem; margin-bottom:1rem">Soil</div>
-          <p style="font-size:1.05rem; color:#555; margin:0">
-            <strong>Upload a soil image</strong> and fill in the parameters,<br>
-            then click <strong>Analyze Soil</strong> to see results.</p>
-        </div>
-        """, unsafe_allow_html=True)
+    if auto_clicked:
+        st.info("Auto-suggest from image is not enabled yet. Use manual inputs for now.")
 
-    if predict_clicked and not img_bytes:
+    st.markdown('<div class="result-title">Result Analysis and Recommendations</div>', unsafe_allow_html=True)
+
+    if not analyze_clicked and not st.session_state.last_result and not st.session_state.last_error:
+        st.markdown(
+            """
+            <div class="card" style="text-align:center; padding:48px; color:#9aa3a0; border:2px dashed #cfd7d2">
+              Upload a soil image and fill in the parameters, then analyze.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if analyze_clicked and not img_bytes:
         st.error("Please upload a soil image before analyzing.")
 
-    if predict_clicked and img_bytes:
+    if analyze_clicked and img_bytes:
         _pil_check = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-
         if not is_soil_image(_pil_check):
-            st.markdown("""
-            <div style="background:#FFEBEE;
-            border-left:4px solid #C62828;
-            border-radius:12px; padding:24px;
-            margin:16px 0">
-            <h3 style="color:#C62828; margin:0 0 8px 0">
-            ❌ No Soil Detected</h3>
-            <p style="color:#B71C1C; margin:0 0 12px 0">
-            Please upload a clear soil photograph.</p>
-            <p style="color:#555; font-size:14px; margin:0">
-            ✓ Red, Black, Clay, Alluvial soil photos<br>
-            ✓ Soil held in hands<br>
-            ✓ Soil in containers or farm fields
-            </p></div>
-            """, unsafe_allow_html=True)
+            st.error("No soil detected. Please upload a clear soil photograph.")
             st.stop()
 
         st.session_state.last_error = None
         with st.spinner("Running AI inference..."):
-                try:
-                    soil_name, confidence, all_probs, soil_fert, crop_recs, dbg = run_inference(
-                        img_model, tab_proj, fusion, xgb_clf, scaler,
-                        CLASS_NAMES, NUMERIC_COLS,
-                        img_bytes,
-                        n, p, k, temp, hum, rain, ph, yld, fert,
-                        season, irrig, prev, region,
-                    )
-                    st.session_state.last_result = {
-                        "soil_name": soil_name,
-                        "confidence": confidence,
-                        "all_probs": all_probs,
-                        "soil_fert": soil_fert,
-                        "crop_recs": crop_recs,
-                        "dbg": dbg,
-                    }
-                except Exception as e:
-                    st.session_state.last_error = f"Prediction failed: {e}"
-                    st.session_state.last_result = None
+            try:
+                soil_name, confidence, all_probs, soil_fert, crop_recs, dbg = run_inference(
+                    img_model, tab_proj, fusion, xgb_clf, scaler,
+                    CLASS_NAMES, NUMERIC_COLS,
+                    img_bytes,
+                    n, p, k, temp, hum, rain, ph, yld, fert,
+                    season, irrig, prev, region,
+                )
+                st.session_state.last_result = {
+                    "soil_name": soil_name,
+                    "confidence": confidence,
+                    "all_probs": all_probs,
+                    "soil_fert": soil_fert,
+                    "crop_recs": crop_recs,
+                    "dbg": dbg,
+                }
+            except Exception as e:
+                st.session_state.last_error = f"Prediction failed: {e}"
+                st.session_state.last_result = None
 
     if st.session_state.last_error:
         st.error(st.session_state.last_error)
@@ -1428,91 +1431,64 @@ with right:
         all_probs = res["all_probs"]
         soil_fert = res["soil_fert"]
         crop_recs = res["crop_recs"]
-        dbg = res["dbg"]
 
         color = SOIL_COLORS.get(soil_name, "#2E7D32")
-        st.markdown(f"""
-        <div style="background:{color}; padding:24px;
-        border-radius:16px; color:white; margin-bottom:16px">
-          <p style="opacity:0.8; margin:0; font-size:13px;
-          text-transform:uppercase; letter-spacing:2px; color:white">
-          Detected Soil Type</p>
-          <h1 style="margin:8px 0; font-size:36px; font-weight:800; color:white">
-          {soil_name}</h1>
-          <div style="background:rgba(255,255,255,0.2);
-          display:inline-block; padding:6px 16px;
-          border-radius:20px; font-size:14px; font-weight:600">
-          Confidence: {confidence}%</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div class="card" style="background:{color}; color:white">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.2em; opacity:0.8">Detected Soil Type</div>
+              <div style="font-size:32px; font-weight:800; margin:4px 0 10px">{soil_name}</div>
+              <div style="display:inline-block; background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:999px; font-weight:700">
+                Confidence: {confidence}%
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        st.markdown("""
-        <p style="font-weight:700; color:#1B5E20;
-        font-size:15px; margin:16px 0 8px 0">
-        Soil Probability Breakdown</p>
-        """, unsafe_allow_html=True)
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight:700; margin-bottom:6px'>Soil Probability Breakdown</div>", unsafe_allow_html=True)
         sorted_probs = sorted(all_probs.items(), key=lambda x: -x[1])
         for soil, prob in sorted_probs:
             bar_color = SOIL_COLORS.get(soil, "#2E7D32")
-            st.markdown(f"""
-            <div style="display:flex; align-items:center;
-            margin:6px 0; gap:10px">
-              <span style="width:110px; font-size:13px;
-              color:var(--prob-label,#333); flex-shrink:0">{soil}</span>
-              <div style="flex:1; background:var(--prob-track,#f0f0f0);
-              border-radius:6px; height:12px">
-                <div style="width:{prob}%; background:{bar_color};
-                height:12px; border-radius:6px"></div>
-              </div>
-              <span style="width:52px; text-align:right;
-              font-size:13px; font-weight:600;
-              color:{bar_color}">{prob:.1f}%</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        st.markdown("""
-        <p style="font-weight:700; color:#1B5E20;
-        font-size:15px; margin:0 0 8px 0">
-        Recommended Crops</p>
-        """, unsafe_allow_html=True)
-        for crop in crop_recs:
-            icon  = CROP_ICONS.get(crop["name"], "")
-            stars = "?" * crop["stars"]
-            st.markdown(f"""
-            <div style="background:var(--card-bg,white); border:1px solid var(--card-border,#C8E6C9);
-            border-radius:12px; padding:16px; margin:8px 0;
-            border-left:4px solid #2E7D32">
-              <div style="display:flex; align-items:center; gap:12px">
-                <span style="font-size:32px">{icon}</span>
-                <div>
-                  <h4 style="margin:0; color:#1B5E20">
-                  {crop["name"]}</h4>
-                  <p style="margin:4px 0; color:#666; font-size:13px">
-                  {stars} &nbsp;Rank #{crop["rank"]}</p>
-                  <p style="margin:0; color:#2E7D32; font-size:13px">
-                   {crop["fertilizer"]} &nbsp;|&nbsp;
-                   {crop["npk"]}</p>
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; gap:10px; margin:6px 0">
+                  <div style="width:130px; font-size:12px; color:#6a726d">{soil}</div>
+                  <div style="flex:1; background:#e8e5e1; border-radius:6px; height:10px">
+                    <div style="width:{prob}%; background:{bar_color}; height:10px; border-radius:6px"></div>
+                  </div>
+                  <div style="width:50px; text-align:right; font-weight:700; color:{bar_color}">{prob:.1f}%</div>
                 </div>
-              </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight:700; margin-bottom:6px'>Recommended Crops</div>", unsafe_allow_html=True)
+        for crop in crop_recs:
+            st.markdown(
+                f"""
+                <div class="card" style="margin-bottom:8px; border-left:4px solid #2d6a4f">
+                  <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div style="font-weight:700">{crop['name']}</div>
+                    <div style="font-size:12px; color:#3c6184">Rank #{crop['rank']}</div>
+                  </div>
+                  <div style="font-size:12px; color:#6a726d; margin-top:6px">
+                    {crop['fertilizer']} | {crop['npk']}
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown(
+            f"""
+            <div class="card" style="border-left:4px solid #ff8f00; background:#fff6e6">
+              <div style="font-weight:800; color:#e65100; margin-bottom:6px">Fertilizer Recommendation</div>
+              <div><strong>Type:</strong> {soil_fert['fertilizer']}</div>
+              <div><strong>NPK Dosage:</strong> {soil_fert['npk']}</div>
             </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div style="background:var(--fert-bg,#FFF8E1); border-radius:12px;
-        padding:20px; border-left:4px solid #FF8F00; margin-top:16px">
-          <h4 style="color:#E65100; margin:0 0 12px 0">
-           Fertilizer Recommendation</h4>
-          <p style="margin:4px 0"><strong>Type:</strong>
-          {soil_fert["fertilizer"]}</p>
-          <p style="margin:4px 0"><strong>NPK Dosage:</strong>
-          {soil_fert["npk"]} kg/ha</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.caption("1 hectare = 2.47 acres | Divide kg/ha by 2.47 to get kg/acre")
-
-        with st.expander("Prediction Debug"):
-            st.write("Raw probs:", dbg["probs"])
-            st.write("Image feat std:", dbg["img_feat_std"])
-
+            """,
+            unsafe_allow_html=True,
+        )
