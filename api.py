@@ -182,7 +182,7 @@ def is_soil_image(pil_img, img_model, transform):
         ((r + g + b) / 3 > 120) & ((r + g + b) / 3 < 210) &
         ((r - b) > 25) & ((r - b) < 120)
     ) / total
-    if skin > 0.18:
+    if skin > 0.30:
         return False
 
     if np.sum((b > r + 40) & (b > g + 30) & (b > 110)) / total > 0.22:
@@ -191,14 +191,6 @@ def is_soil_image(pil_img, img_model, transform):
         return False
 
     if arr.mean() > 195:
-        return False
-
-    earth = np.sum(
-        (r > 70) & (g > 45) & (b > 25) &
-        (r >= g) & (g >= b) &
-        (r < 220) & (g < 180) & (b < 150)
-    ) / total
-    if earth < 0.06:
         return False
 
     h_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=1)).mean()
@@ -210,7 +202,12 @@ def is_soil_image(pil_img, img_model, transform):
     with torch.no_grad():
         out   = img_model(img_t, return_features=False)
         probs = torch.softmax(out, dim=-1)[0]
-    if probs.max().item() * 100 < 40.0:
+    maxp = probs.max().item() * 100
+    top2 = torch.topk(probs, 2).values
+    gap  = (top2[0] - top2[1]).item()
+    if maxp < 35.0:
+        return False
+    if maxp < 45.0 and gap < 0.08:
         return False
 
     return True

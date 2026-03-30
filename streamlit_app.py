@@ -35,6 +35,9 @@ _BASE_CSS = """
   .block-container { padding: 0 2rem 2rem; max-width: 1200px; }
   h1, h2, h3, h4 { font-family: 'Segoe UI', sans-serif; }
   .hero h1, .hero p { color: #ffffff !important; }
+  .section-card { background: var(--section-bg); padding: 16px; border-radius: 12px;
+                  border-left: 4px solid var(--accent); margin-bottom: 16px; }
+  .section-title { color: var(--section-title); margin: 0 0 10px 0; }
   div.stButton > button {
     background: #2E7D32; color: white; border: none;
     padding: 14px 48px; font-size: 18px; font-weight: 600;
@@ -69,6 +72,7 @@ LIGHT_THEME = _BASE_CSS + """
 <style>
   :root { --card-bg: #FFFFFF; --card-border: #E8F5E9; --text: #212121;
           --subtext: #555; --page-bg: #F9FBF9; --section-bg: #E8F5E9;
+          --section-title: #1B5E20; --accent: #2E7D32;
           --prob-track: #f0f0f0; --prob-label: #333; --fert-bg: #FFF8E1; }
   .main, .stApp { background: #F9FBF9 !important; }
   h1,h2,h3,h4,p { color: #212121; }
@@ -84,6 +88,7 @@ DARK_THEME = _BASE_CSS + """
 <style>
   :root { --card-bg: #1E1E1E; --card-border: #2E2E2E; --text: #FFFFFF;
           --subtext: #AAAAAA; --page-bg: #121212; --section-bg: #1A2A1A;
+          --section-title: #E7F7E7; --accent: #81C784;
           --prob-track: #2C2C2C; --prob-label: #CCCCCC; --fert-bg: #2A2000; }
   .main, .stApp { background: #121212 !important; }
   h1,h2,h3,h4,p,label,span { color: #FFFFFF !important; }
@@ -434,13 +439,13 @@ def is_soil_image(pil_img, img_model, transform):
     if (cyan_pixels + orange_neon + pink_neon + bright_red_neon) > 0.02:
         return False
 
-    # Rule 2: Skin
+    # Rule 2: Skin (hands allowed, be lenient)
     skin = np.sum(
         (r > 160) & (g > 110) & (b > 90) & (r > g) & (g > b) &
         ((r + g + b) / 3 > 120) & ((r + g + b) / 3 < 210) &
         ((r - b) > 25) & ((r - b) < 120)
     ) / total
-    if skin > 0.18:
+    if skin > 0.30:
         return False
 
     # Rule 3: Pure blue
@@ -455,27 +460,23 @@ def is_soil_image(pil_img, img_model, transform):
     if arr.mean() > 195:
         return False
 
-    # Rule 6: Earth-tone presence (avoid UI/screenshots)
-    earth = np.sum(
-        (r > 70) & (g > 45) & (b > 25) &
-        (r >= g) & (g >= b) &
-        (r < 220) & (g < 180) & (b < 150)
-    ) / total
-    if earth < 0.06:
-        return False
-
-    # Rule 7: High gradient diff (gaming/UI)
+    # Rule 6: High gradient diff (gaming/UI)
     h_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=1)).mean()
     v_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=0)).mean()
     if (h_diff + v_diff) / 2 > 28:
         return False
 
-    # Rule 8: ResNet confidence
+    # Rule 7: ResNet confidence + margin
     img_t = transform(pil_img).unsqueeze(0)
     with torch.no_grad():
         out   = img_model(img_t, return_features=False)
         probs = torch.softmax(out, dim=-1)[0]
-    if probs.max().item() * 100 < 40.0:
+    maxp = probs.max().item() * 100
+    top2 = torch.topk(probs, 2).values
+    gap  = (top2[0] - top2[1]).item()
+    if maxp < 35.0:
+        return False
+    if maxp < 45.0 and gap < 0.08:
         return False
 
     return True
@@ -559,9 +560,8 @@ with left:
 
     # Section: Soil Image
     st.markdown("""
-    <div style="background:#E8F5E9; padding:16px; border-radius:12px;
-    border-left:4px solid #2E7D32; margin-bottom:16px">
-    <h4 style="color:#1B5E20; margin:0 0 10px 0">📷 Soil Image</h4>
+    <div class="section-card">
+    <h4 class="section-title">📷 Soil Image</h4>
     </div>
     """, unsafe_allow_html=True)
     uploaded = st.file_uploader(
@@ -581,9 +581,8 @@ with left:
 
     # Section: Soil Chemical Properties
     st.markdown("""
-    <div style="background:#E8F5E9; padding:16px; border-radius:12px;
-    border-left:4px solid #2E7D32; margin:16px 0 8px 0">
-    <h4 style="color:#1B5E20; margin:0">🧪 Soil Chemical Properties</h4>
+    <div class="section-card" style="margin:16px 0 8px 0">
+    <h4 class="section-title">🧪 Soil Chemical Properties</h4>
     </div>
     """, unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -597,9 +596,8 @@ with left:
 
     # Section: Environmental Conditions
     st.markdown("""
-    <div style="background:#E8F5E9; padding:16px; border-radius:12px;
-    border-left:4px solid #2E7D32; margin:16px 0 8px 0">
-    <h4 style="color:#1B5E20; margin:0">🌡️ Environmental Conditions</h4>
+    <div class="section-card" style="margin:16px 0 8px 0">
+    <h4 class="section-title">🌡️ Environmental Conditions</h4>
     </div>
     """, unsafe_allow_html=True)
     e1, e2, e3 = st.columns(3)
@@ -612,9 +610,8 @@ with left:
 
     # Section: Farm History
     st.markdown("""
-    <div style="background:#E8F5E9; padding:16px; border-radius:12px;
-    border-left:4px solid #2E7D32; margin:16px 0 8px 0">
-    <h4 style="color:#1B5E20; margin:0">📊 Farm History</h4>
+    <div class="section-card" style="margin:16px 0 8px 0">
+    <h4 class="section-title">📊 Farm History</h4>
     </div>
     """, unsafe_allow_html=True)
     h1, h2 = st.columns(2)
@@ -625,9 +622,8 @@ with left:
 
     # Section: Farm Details
     st.markdown("""
-    <div style="background:#E8F5E9; padding:16px; border-radius:12px;
-    border-left:4px solid #2E7D32; margin:16px 0 8px 0">
-    <h4 style="color:#1B5E20; margin:0">🌾 Farm Details</h4>
+    <div class="section-card" style="margin:16px 0 8px 0">
+    <h4 class="section-title">🌾 Farm Details</h4>
     </div>
     """, unsafe_allow_html=True)
     d1, d2 = st.columns(2)
@@ -674,12 +670,10 @@ with right:
             cyan_d  = np.sum((b_d > 150) & (g_d > 150) & (r_d < 100)) / total_d
             neon_o  = np.sum((r_d > 220) & (g_d > 80) & (g_d < 170) & (b_d < 80)) / total_d
             skin_d  = np.sum((r_d > 160) & (g_d > 110) & (b_d > 90) & (r_d > g_d) & (g_d > b_d) & ((r_d + g_d + b_d) / 3 > 120)) / total_d
-            earth_d = np.sum((r_d > 70) & (g_d > 45) & (b_d > 25) & (r_d >= g_d) & (g_d >= b_d) & (r_d < 220) & (g_d < 180) & (b_d < 150)) / total_d
             h_d     = np.abs(np.diff(arr_d[:, :, 0], axis=1)).mean()
             st.write(f"Cyan neon: {cyan_d:.3f} (reject if >0.02)")
             st.write(f"Orange neon: {neon_o:.3f} (reject if >0.02)")
-            st.write(f"Skin ratio: {skin_d:.3f} (reject if >0.18)")
-            st.write(f"Earth tone: {earth_d:.3f} (reject if <0.06)")
+            st.write(f"Skin ratio: {skin_d:.3f} (reject if >0.30)")
             st.write(f"H-diff: {h_d:.2f} (reject if >28)")
             st.write(f"Brightness: {arr_d.mean():.1f} (reject if >195)")
 
