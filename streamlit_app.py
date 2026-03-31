@@ -1141,8 +1141,8 @@ CUSTOM_CSS = """
 }
 
 /* ── Global ── */
-html, body, [class*="css"] { font-family: 'Work Sans', sans-serif !important; color: #404942; }
-.stApp, .main { background-color: #F2EFE8 !important; }
+html, body, [class*="css"] { font-family: 'Work Sans', sans-serif !important; color: var(--text) !important; }
+.stApp, .main { background-color: var(--bg) !important; }
 .block-container { max-width: 1120px !important; padding: 0 2rem 3rem !important; }
 #MainMenu, footer { visibility: hidden !important; }
 .stDeployButton { display: none !important; }
@@ -1163,22 +1163,22 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 /* ── Primary / Secondary buttons (main area) ── */
 .main button[data-testid="baseButton-primary"],
 .block-container button[data-testid="baseButton-primary"] {
-    background: #2f7144 !important; color: #fff !important;
+    background: var(--primary-2) !important; color: #fff !important;
     border: none !important; border-radius: 0.75rem !important;
     font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 1.02rem !important; height: 3.25rem !important;
 }
 .main button[kind="primary"],
 .block-container button[kind="primary"] {
-    background: #2f7144 !important; color: #fff !important;
+    background: var(--primary-2) !important; color: #fff !important;
 }
 .main button[data-testid="baseButton-primary"]:hover,
 .block-container button[data-testid="baseButton-primary"]:hover {
-    background: #1e5c3a !important;
+    background: var(--primary) !important;
 }
 .main button[data-testid="baseButton-secondary"],
 .block-container button[data-testid="baseButton-secondary"] {
-    background: #ffffff !important; color: #404942 !important;
+    background: var(--surface-container-lowest) !important; color: var(--text) !important;
     border: 2px solid rgba(47,113,68,0.22) !important; border-radius: 0.75rem !important;
     font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 0.95rem !important; height: 3.25rem !important;
@@ -1189,21 +1189,40 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background: rgba(227,226,223,0.95);
+    background: var(--surface-container-highest);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+/* Theme icon-only toggle in top bar */
+div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="stButton"] > button {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--outline) !important;
+    background: var(--surface-container-highest) !important;
+    color: var(--primary) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+}
+div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="stButton"] > button:hover {
+    background: var(--surface-container-high) !important;
+}
+
 /* ── Form inputs ── */
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextInput"] input {
-    background: #ffffff !important; border: none !important;
+    background: var(--surface-container-lowest) !important; border: none !important;
     border-radius: 0.5rem !important; font-weight: 700 !important;
-    color: #1b1c1a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
+    color: var(--text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    background: #ffffff !important; border: none !important;
+    background: var(--surface-container-lowest) !important; border: none !important;
     border-radius: 0.5rem !important; font-weight: 700 !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
@@ -1216,7 +1235,7 @@ div[data-testid="stFileUploader"] label {
     color: rgba(64,73,66,0.65) !important;
 }
 div[data-testid="stFileUploader"] section {
-    background: #efeeea !important; border: 2px dashed #c0c9bf !important;
+    background: var(--surface-container) !important; border: 2px dashed var(--outline) !important;
     border-radius: 0.75rem !important;
 }
 
@@ -1229,7 +1248,7 @@ div[data-testid="stColumn"]:has(#mrk-chem),
 div[data-testid="stColumn"]:has(#mrk-env),
 div[data-testid="stColumn"]:has(#mrk-hist),
 div[data-testid="stColumn"]:has(#mrk-det) {
-    background: #e5e4e0 !important;
+    background: var(--surface-container-high) !important;
     border-radius: 0.75rem !important;
     border: 1px solid rgba(192,201,191,0.3) !important;
     box-shadow: 0 2px 8px rgba(27,28,26,0.06) !important;
@@ -1303,35 +1322,35 @@ st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 top_l, top_t, top_s, top_n = st.columns([14, 1, 1, 1])
 
 with top_l:
-        st.markdown("""
+    st.markdown("""
 <div style="padding:0.35rem 0 0.65rem;border-bottom:1px solid rgba(192,201,191,0.25)">
     <h2 style="font-family:Manrope,sans-serif;font-size:1.2rem;font-weight:800;
-            color:#1e5c3a;margin:0">Agricultural Intelligence</h2>
+        color:var(--primary);margin:0">Agricultural Intelligence</h2>
     <span style="display:block;height:2px;width:56px;background:rgba(47,113,68,0.6);
             margin-top:6px;border-radius:999px"></span>
 </div>
 """, unsafe_allow_html=True)
 
 with top_t:
-        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-        _theme_icon = "light_mode" if st.session_state.theme == "dark" else "dark_mode"
-        if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
-                st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-                st.rerun()
+    st.markdown('<div style="height:8px"></div><span id="theme-toggle-marker"></span>', unsafe_allow_html=True)
+    _theme_icon = "☀" if st.session_state.theme == "dark" else "🌙"
+    if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
+    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+    st.rerun()
 
 with top_s:
-        st.markdown('''
+    st.markdown('''
 <div style="height:8px"></div>
 <div class="top-icon-btn">
-    <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">settings</span>
+    <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">settings</span>
 </div>
 ''', unsafe_allow_html=True)
 
 with top_n:
-        st.markdown('''
+    st.markdown('''
 <div style="height:8px"></div>
 <div class="top-icon-btn">
-    <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">notifications</span>
+    <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">notifications</span>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1339,11 +1358,11 @@ with top_n:
 hero_l, hero_r = st.columns([3, 1])
 with hero_l:
     st.markdown("""
-<h1 style="font-family:Manrope,sans-serif;font-size:2.75rem;font-weight:800;color:#004425;
+<h1 style="font-family:Manrope,sans-serif;font-size:2.75rem;font-weight:900;color:var(--primary);
     letter-spacing:-0.025em;line-height:1.1;margin:0 0 0.875rem">
   Precise Agricultural<br>Intelligence
 </h1>
-<p style="color:#404942;font-size:1rem;font-weight:300;line-height:1.7;
+<p style="color:var(--muted);font-size:1rem;font-weight:300;line-height:1.7;
     max-width:560px;margin:0 0 1.5rem">
   Synthesize complex soil data, real-time climate metrics, and historical
   yield patterns to generate laboratory-grade crop recommendations.
@@ -1352,7 +1371,7 @@ with hero_l:
 
 with hero_r:
     st.markdown("""
-<div style="background:#ffffff;padding:1rem 1.125rem;border-radius:0.75rem;
+<div style="background:var(--surface-container-lowest);padding:1rem 1.125rem;border-radius:0.75rem;
      border:1px solid rgba(192,201,191,0.2);box-shadow:0 1px 3px rgba(0,0,0,0.05)">
   <div style="display:flex;align-items:center;gap:7px;margin-bottom:0.625rem">
     <span class="material-symbols-outlined"
