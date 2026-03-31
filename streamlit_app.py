@@ -1186,50 +1186,32 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
     font-size: 0.95rem !important; height: 3.25rem !important;
 }
 
+/* Theme toggle uses tertiary button type for isolated styling */
+.main button[data-testid="baseButton-tertiary"],
+.block-container button[data-testid="baseButton-tertiary"] {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    border-radius: 10px !important;
+    border: 1px solid #E0E3DF !important;
+    background: #F9F9F7 !important;
+    color: #1E5C3A !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
 /* ── Compact top controls ── */
 .top-icon-btn {
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background: var(--surface-container-highest);
-    border: 1px solid var(--outline);
+    background: #F9F9F7;
+    border: 1px solid #E0E3DF;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Theme icon-only toggle in top bar */
-div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="stButton"] > button {
-    width: 36px !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    border-radius: 999px !important;
-    border: 1px solid var(--outline) !important;
-    background: var(--surface-container-highest) !important;
-    color: #1E5C3A !important;
-    font-size: 0 !important;
-    line-height: 1 !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-    padding: 0 !important;
-    white-space: nowrap !important;
-}
-div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker-light) div[data-testid="stButton"] > button::before {
-    content: 'dark_mode';
-    font-family: 'Material Symbols Outlined' !important;
-    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
-    font-size: 20px;
-    color: #1E5C3A;
-}
-div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker-dark) div[data-testid="stButton"] > button::before {
-    content: 'light_mode';
-    font-family: 'Material Symbols Outlined' !important;
-    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
-    font-size: 20px;
-    color: #1E5C3A;
-}
-div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="stButton"] > button:hover {
-    background: var(--surface-container-high) !important;
 }
 
 /* ── Form inputs ── */
@@ -1266,7 +1248,7 @@ div[data-testid="stColumn"]:has(#mrk-chem),
 div[data-testid="stColumn"]:has(#mrk-env),
 div[data-testid="stColumn"]:has(#mrk-hist),
 div[data-testid="stColumn"]:has(#mrk-det) {
-    background: #FFFFFF !important;
+    background: #E5E4E0 !important;
     border-radius: 0.75rem !important;
     border: 1px solid rgba(192,201,191,0.3) !important;
     box-shadow: 0 2px 8px rgba(27,28,26,0.06) !important;
@@ -1350,10 +1332,9 @@ with top_l:
 """, unsafe_allow_html=True)
 
 with top_t:
-    marker = "theme-toggle-marker-dark" if st.session_state.theme == "dark" else "theme-toggle-marker-light"
-    st.markdown(f'<div style="height:8px"></div><span id="{marker}"></span><span id="theme-toggle-marker"></span>', unsafe_allow_html=True)
-    _theme_icon = " "
-    if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
+    st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+    _theme_icon = "☀"
+    if st.button(_theme_icon, key="theme_toggle", help="Toggle theme", type="tertiary"):
         st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
         st.rerun()
 
@@ -1361,7 +1342,7 @@ with top_s:
     st.markdown('''
 <div style="height:8px"></div>
 <div class="top-icon-btn">
-    <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">settings</span>
+    <span class="material-symbols-outlined" style="color:#1E5C3A;font-size:20px">settings</span>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1369,7 +1350,7 @@ with top_n:
     st.markdown('''
 <div style="height:8px"></div>
 <div class="top-icon-btn">
-    <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">notifications</span>
+    <span class="material-symbols-outlined" style="color:#1E5C3A;font-size:20px">notifications</span>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1399,23 +1380,23 @@ with hero_r:
   <div style="display:flex;align-items:center;gap:7px;margin-bottom:0.625rem">
     <span class="material-symbols-outlined"
       style="color:#1d4ed8;font-size:17px;font-variation-settings:'FILL' 1">info</span>
-    <h3 style="font-family:Manrope,sans-serif;font-weight:900;font-size:10px;
+        <h3 style="font-family:Manrope,sans-serif;font-weight:900;font-size:12px;
         text-transform:uppercase;letter-spacing:0.1em;color:#1e3a5f;margin:0">Farmer Unit Guide</h3>
   </div>
-  <div style="font-size:11px">
+    <div style="font-size:13px">
     <div style="display:flex;justify-content:space-between;
          border-bottom:1px solid rgba(30,58,95,0.08);padding-bottom:4px;margin-bottom:4px">
       <span style="font-weight:900;color:#1e3a5f">Yield:</span>
-      <span style="font-weight:700;color:rgba(30,58,95,0.6)">t/ha</span>
+    <span style="font-weight:800;color:rgba(30,58,95,0.75)">t/ha</span>
     </div>
     <div style="display:flex;justify-content:space-between;
          border-bottom:1px solid rgba(30,58,95,0.08);padding-bottom:4px;margin-bottom:4px">
       <span style="font-weight:900;color:#1e3a5f">NPK:</span>
-      <span style="font-weight:700;color:rgba(30,58,95,0.6)">kg/ha</span>
+    <span style="font-weight:800;color:rgba(30,58,95,0.75)">kg/ha</span>
     </div>
     <div style="display:flex;justify-content:space-between">
       <span style="font-weight:900;color:#1e3a5f">Area:</span>
-      <span style="font-weight:700;color:rgba(30,58,95,0.6)">1 acre = 0.4 ha</span>
+            <span style="font-weight:800;color:rgba(30,58,95,0.75)">1 acre = 0.4 ha</span>
     </div>
   </div>
 </div>
@@ -1446,7 +1427,7 @@ with col_img:
     st.markdown("""
 <div style="background:rgba(0,0,0,0.04);padding:0.75rem 0.875rem;border-radius:0.5rem;
      margin-top:0.625rem">
-  <p style="font-size:12px;color:#5a6360;line-height:1.6;margin:0">
+    <p style="font-size:13px;color:#5a6360;line-height:1.6;margin:0;font-weight:500">
     <strong>&#x1f4a1; Tip:</strong> Upload a clear close-up photo of soil for best results.
     Avoid photos with people, plants, or bright objects.
   </p>
@@ -1467,9 +1448,9 @@ def _npk_bar(val, lo, hi, vmax):
     return (
         f"<div style='height:5px;background:#e6e8e4;border-radius:999px;"
         f"overflow:hidden;display:flex;margin-top:5px'>"
-        f"<div style='width:{rl:.0f}%;background:#FFB4AB'></div>"
-        f"<div style='width:{gw:.0f}%;background:#4A8C5C'></div>"
-        f"<div style='width:{rr:.0f}%;background:#FFB4AB'></div>"
+        f"<div style='width:{rl:.0f}%;background:#ef4444'></div>"
+        f"<div style='width:{gw:.0f}%;background:#22c55e'></div>"
+        f"<div style='width:{rr:.0f}%;background:#ef4444'></div>"
         f"</div>"
     )
 
@@ -1533,7 +1514,7 @@ with env_col:
         village = st.text_input("Enter Village / Town Name", placeholder="e.g. Ramtek")
     with ec4:
         st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
-        fetch_btn = st.button("☀ Fetch Local Data", type="primary", use_container_width=True)
+        fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
 
     if fetch_btn:
         if sel_state == "-- Select State --":
