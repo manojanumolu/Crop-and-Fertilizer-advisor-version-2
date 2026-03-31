@@ -1988,46 +1988,17 @@ if st.session_state.last_result:
     soil_fert  = res["soil_fert"]
     crop_recs  = res["crop_recs"]
 
-    CROP_IMAGE_MAP = {
-        "Cotton":       "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Gossypium_hirsutum_%28cotton%29_plant.jpg/480px-Gossypium_hirsutum_%28cotton%29_plant.jpg",
-        "Maize":        "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Corncobs.jpg/480px-Corncobs.jpg",
-        "Rice":         "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Rice_paddy.jpg/480px-Rice_paddy.jpg",
-        "Wheat":        "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Trigo.jpg/480px-Trigo.jpg",
-        "Sugarcane":    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Sugarcane_field.jpg/480px-Sugarcane_field.jpg",
-        "Potato":       "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Patates.jpg/480px-Patates.jpg",
-        "Tomato":       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Bright_red_tomato_and_cross_section02.jpg/480px-Bright_red_tomato_and_cross_section02.jpg",
-        "Sorghum":      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Sorghum_bicolor03.jpg/480px-Sorghum_bicolor03.jpg",
-        "Soybean":      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Soybean.USDA.jpg/480px-Soybean.USDA.jpg",
-        "Groundnut":    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Peanuts_of_arachis_hypogaea.jpg/480px-Peanuts_of_arachis_hypogaea.jpg",
-        "Sunflower":    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/A_sunflower.jpg/480px-A_sunflower.jpg",
-        "Mustard":      "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Brassica_napus_flowering.jpg/480px-Brassica_napus_flowering.jpg",
-        "Barley":       "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Barley_field.jpg/480px-Barley_field.jpg",
-        "Peas":         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Peas_in_pods_-_Studio.jpg/480px-Peas_in_pods_-_Studio.jpg",
-        "Chickpea":     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Chickpeas.jpg/480px-Chickpeas.jpg",
-        "Linseed":      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Linum_usitatissimum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-266.jpg/480px-Linum_usitatissimum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-266.jpg",
-        "Watermelon":   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Watermelon_closeup.jpg/480px-Watermelon_closeup.jpg",
-        "Cucumber":     "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/480px-A_small_cup_of_coffee.JPG",
-        "Bitter Gourd": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Bittergourd.jpg/480px-Bittergourd.jpg",
-        "Moong":        "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Mung_bean_sprouts_closeup.jpg/480px-Mung_bean_sprouts_closeup.jpg",
-        "Muskmelon":    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Musk_melon.jpg/480px-Musk_melon.jpg",
-        "Jute":         "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Corchorus_capsularis.jpg/480px-Corchorus_capsularis.jpg",
-        "Safflower":    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Carthamus_tinctorius_-_Safflower.jpg/480px-Carthamus_tinctorius_-_Safflower.jpg",
-        "Sesame":       "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Sesamum_indicum.jpg/480px-Sesamum_indicum.jpg",
-        "Taro":         "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Colocasia_esculenta.jpg/480px-Colocasia_esculenta.jpg",
-        "Spinach":      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Spinach_leaves.jpg/480px-Spinach_leaves.jpg",
-        "Pumpkin":      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Pumpkins.jpg/480px-Pumpkins.jpg",
-        "Cashew":       "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Cashew_on_tree.jpg/480px-Cashew_on_tree.jpg",
-        "Rubber":       "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rubber_tree.jpg/480px-Rubber_tree.jpg",
-        "Tea":          "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Tea_leaves_2_%28cropped%29.jpg/480px-Tea_leaves_2_%28cropped%29.jpg",
-        "Coffee":       "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Roasted_coffee_beans.jpg/480px-Roasted_coffee_beans.jpg",
-        "Tapioca":      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Cassava.jpg/480px-Cassava.jpg",
-        "Turmeric":     "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Turmeric_rhizomes_and_powder.jpg/480px-Turmeric_rhizomes_and_powder.jpg",
-        "Ginger":       "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ginger_roots.jpg/480px-Ginger_roots.jpg",
-        "Mango":        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Hapus_Mango.jpg/480px-Hapus_Mango.jpg",
-        "Pineapple":    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pineapple_and_cross_section.jpg/480px-Pineapple_and_cross_section.jpg",
-        "Jackfruit":    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Jackfruit_hanging.jpg/480px-Jackfruit_hanging.jpg",
-        "Banana":       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Platano.jpg/480px-Banana-Platano.jpg",
-        "Cucumber":     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Cucumbers.jpg/480px-Cucumbers.jpg",
+    CROP_EMOJI_MAP = {
+        "Cotton": "🌿", "Maize": "🌽", "Rice": "🌾", "Wheat": "🌾",
+        "Sugarcane": "🎋", "Potato": "🥔", "Tomato": "🍅", "Sorghum": "🌾",
+        "Soybean": "🫘", "Groundnut": "🥜", "Sunflower": "🌻", "Mustard": "🌼",
+        "Barley": "🌾", "Peas": "🫛", "Chickpea": "🫘", "Linseed": "🌱",
+        "Watermelon": "🍉", "Cucumber": "🥒", "Bitter Gourd": "🥬",
+        "Moong": "🫘", "Muskmelon": "🍈", "Jute": "🌿", "Safflower": "🌸",
+        "Sesame": "🌱", "Taro": "🥬", "Spinach": "🥬", "Pumpkin": "🎃",
+        "Cashew": "🌰", "Rubber": "🌳", "Tea": "🍵", "Coffee": "☕",
+        "Tapioca": "🌿", "Turmeric": "🟡", "Ginger": "🫚",
+        "Mango": "🥭", "Pineapple": "🍍", "Jackfruit": "🍈", "Banana": "🍌",
     }
     SOIL_COLORS = {
         "Red Soil": "#C62828", "Black Soil": "#37474F", "Alluvial Soil": "#6D4C41",
@@ -2035,11 +2006,11 @@ if st.session_state.last_result:
         "Sandy Soil": "#8D6E63",
     }
 
-    top       = crop_recs[0]
-    top_img   = CROP_IMAGE_MAP.get(top["name"], "https://source.unsplash.com/800x800/?crop,field")
-    soil_col  = SOIL_COLORS.get(soil_name, "#004425")
-    rank2_pct = max(10, int(confidence) - 12)
-    rank3_pct = max(10, int(confidence) - 24)
+    top        = crop_recs[0]
+    top_emoji  = CROP_EMOJI_MAP.get(top["name"], "🌱")
+    soil_col   = SOIL_COLORS.get(soil_name, "#004425")
+    rank2_pct  = max(10, int(confidence) - 12)
+    rank3_pct  = max(10, int(confidence) - 24)
 
     # ── 3-col grid ───────────────────────────────────────────────
     res_hero, res_side = st.columns([2, 1], gap="large")
@@ -2050,11 +2021,11 @@ if st.session_state.last_result:
      box-shadow:0 2px 10px rgba(0,0,0,0.08);border:1px solid rgba(192,201,191,0.2);
      display:flex;min-height:280px">
   <div style="width:38%;background:{soil_col};display:flex;align-items:center;
-       justify-content:center;min-height:240px;position:relative;flex-shrink:0">
-    <img src="{top_img}" alt="{top["name"]}"
-        style="width:100%;height:100%;object-fit:cover;display:block;opacity:0.92" />
+       justify-content:center;min-height:240px;position:relative;flex-shrink:0;
+       flex-direction:column;gap:8px">
+    <span style="font-size:5rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3))">{top_emoji}</span>
     <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center">
-            <span style="background:rgba(0,0,0,0.3);color:white;font-size:10px;font-weight:900;
+      <span style="background:rgba(0,0,0,0.3);color:white;font-size:10px;font-weight:900;
           padding:2px 8px;border-radius:999px;letter-spacing:0.06em">{soil_name}</span>
     </div>
   </div>
@@ -2107,14 +2078,14 @@ if st.session_state.last_result:
 
     with res_side:
         if len(crop_recs) > 1:
-            c2    = crop_recs[1]
-            img2 = CROP_IMAGE_MAP.get(c2["name"], "https://source.unsplash.com/160x160/?crop,plant")
+            c2     = crop_recs[1]
+            emoji2 = CROP_EMOJI_MAP.get(c2["name"], "🌱")
             st.markdown(f"""
 <div style="background:#f0f9ff;border-radius:1rem;padding:1.125rem;
      border:1px solid #bae6fd;display:flex;gap:0.875rem;margin-bottom:0.875rem">
   <div style="width:68px;height:68px;border-radius:0.625rem;background:#e0f2fe;
-       flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        <img src="{img2}" alt="{c2["name"]}" style="width:100%;height:100%;object-fit:cover;border-radius:0.625rem" />
+       flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:2.2rem">
+    {emoji2}
   </div>
   <div style="display:flex;flex-direction:column;justify-content:center;min-width:0">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
@@ -2133,14 +2104,14 @@ if st.session_state.last_result:
 """, unsafe_allow_html=True)
 
         if len(crop_recs) > 2:
-            c3    = crop_recs[2]
-            img3 = CROP_IMAGE_MAP.get(c3["name"], "https://source.unsplash.com/160x160/?farm,crop")
+            c3     = crop_recs[2]
+            emoji3 = CROP_EMOJI_MAP.get(c3["name"], "🌱")
             st.markdown(f"""
 <div style="background:#f0fdf4;border-radius:1rem;padding:1.125rem;
      border:1px solid #bbf7d0;display:flex;gap:0.875rem;margin-bottom:0.875rem">
   <div style="width:68px;height:68px;border-radius:0.625rem;background:#dcfce7;
-       flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        <img src="{img3}" alt="{c3["name"]}" style="width:100%;height:100%;object-fit:cover;border-radius:0.625rem" />
+       flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:2.2rem">
+    {emoji3}
   </div>
   <div style="display:flex;flex-direction:column;justify-content:center;min-width:0">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
