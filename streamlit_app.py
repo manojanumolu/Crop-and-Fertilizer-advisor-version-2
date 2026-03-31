@@ -43,20 +43,21 @@ if "theme" not in st.session_state:
 if st.session_state.theme == "dark":
     THEME_VARS = """<style>
 :root {
-  --bg: #141414;
-  --surface: #1d1d1d;
-  --surface-2: #202020;
-  --surface-3: #262626;
-  --surface-container-low: #202020;
-  --surface-container-lowest: #262626;
-  --surface-container-high: #2a2a2a;
-  --surface-container-highest: #2f2f2f;
-  --outline: #2f2f2f;
-  --text: #f1f1f1;
-  --muted: #b5b5b5;
-  --primary: #3fbf7f;
-  --primary-2: #2d6a4f;
-  --secondary: #6aa2d8;
+    --bg: #1c211d;
+    --surface: #222823;
+    --surface-2: #283028;
+    --surface-3: #2d352e;
+    --surface-container-low: #283028;
+    --surface-container-lowest: #313b33;
+    --surface-container: #2a312b;
+    --surface-container-high: #333c34;
+    --surface-container-highest: #3a443b;
+    --outline: #4b564d;
+    --text: #e8ece8;
+    --muted: #b8c1b8;
+    --primary: #acf3ba;
+    --primary-2: #4a8c5c;
+    --secondary: #9fd2a8;
   --secondary-fixed: #2b3f5a;
   --on-secondary-fixed-variant: #cfe3ff;
   --tertiary: #a56b6d;
@@ -70,20 +71,21 @@ if st.session_state.theme == "dark":
 else:
     THEME_VARS = """<style>
 :root {
-  --bg: #fbf9f6;
+    --bg: #F5F4F0;
   --surface: #ffffff;
-  --surface-2: #f5f3f0;
-  --surface-3: #efeeeb;
-  --surface-container-low: #f5f3f0;
+    --surface-2: #F9F9F7;
+    --surface-3: #F9F9F7;
+    --surface-container-low: #F9F9F7;
   --surface-container-lowest: #ffffff;
-  --surface-container-high: #eae8e5;
-  --surface-container-highest: #e4e2df;
-  --outline: #bfc9c1;
-  --text: #1b1c1a;
-  --muted: #6a726d;
-  --primary: #0f5238;
-  --primary-2: #2d6a4f;
-  --secondary: #3c6184;
+    --surface-container: #F9F9F7;
+    --surface-container-high: #ffffff;
+    --surface-container-highest: #F9F9F7;
+    --outline: #E0E3DF;
+    --text: #404942;
+    --muted: #707971;
+    --primary: #1E5C3A;
+    --primary-2: #1E5C3A;
+    --secondary: #4A8C5C;
   --secondary-fixed: #cee5ff;
   --on-secondary-fixed-variant: #224a6b;
   --tertiary: #713638;
@@ -1150,11 +1152,11 @@ header[data-testid="stHeader"] { display: none !important; }
 
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
-    background: #214130 !important;
+    background: #1A3A2A !important;
     width: 240px !important; min-width: 240px !important;
 }
 section[data-testid="stSidebar"] > div {
-    background: #214130 !important;
+    background: #1A3A2A !important;
     padding: 1.75rem 1rem 1.25rem !important;
 }
 [data-testid="stSidebarNav"] { display: none !important; }
@@ -1164,7 +1166,7 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 .main button[data-testid="baseButton-primary"],
 .block-container button[data-testid="baseButton-primary"] {
     background: var(--primary-2) !important; color: #fff !important;
-    border: none !important; border-radius: 0.75rem !important;
+    border: none !important; border-radius: 8px !important;
     font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 1.02rem !important; height: 3.25rem !important;
 }
@@ -1179,7 +1181,7 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 .main button[data-testid="baseButton-secondary"],
 .block-container button[data-testid="baseButton-secondary"] {
     background: var(--surface-container-lowest) !important; color: var(--text) !important;
-    border: 2px solid rgba(47,113,68,0.22) !important; border-radius: 0.75rem !important;
+    border: 1px solid var(--outline) !important; border-radius: 8px !important;
     font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 0.95rem !important; height: 3.25rem !important;
 }
@@ -1190,6 +1192,7 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
     height: 36px;
     border-radius: 999px;
     background: var(--surface-container-highest);
+    border: 1px solid var(--outline);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1203,16 +1206,27 @@ div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="st
     border-radius: 999px !important;
     border: 1px solid var(--outline) !important;
     background: var(--surface-container-highest) !important;
-    color: var(--primary) !important;
-    font-family: 'Material Symbols Outlined' !important;
-    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
-    font-size: 18px !important;
-    font-weight: 600 !important;
+    color: #1E5C3A !important;
+    font-size: 0 !important;
     line-height: 1 !important;
     letter-spacing: 0 !important;
     text-transform: none !important;
     padding: 0 !important;
     white-space: nowrap !important;
+}
+div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker-light) div[data-testid="stButton"] > button::before {
+    content: 'dark_mode';
+    font-family: 'Material Symbols Outlined' !important;
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    font-size: 20px;
+    color: #1E5C3A;
+}
+div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker-dark) div[data-testid="stButton"] > button::before {
+    content: 'light_mode';
+    font-family: 'Material Symbols Outlined' !important;
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    font-size: 20px;
+    color: #1E5C3A;
 }
 div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="stButton"] > button:hover {
     background: var(--surface-container-high) !important;
@@ -1221,13 +1235,13 @@ div[data-testid="stVerticalBlock"]:has(#theme-toggle-marker) div[data-testid="st
 /* ── Form inputs ── */
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextInput"] input {
-    background: var(--surface-container-lowest) !important; border: none !important;
-    border-radius: 0.5rem !important; font-weight: 700 !important;
+    background: #F9F9F7 !important; border: 1px solid #E0E3DF !important;
+    border-radius: 8px !important; font-weight: 700 !important;
     color: var(--text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    background: var(--surface-container-lowest) !important; border: none !important;
-    border-radius: 0.5rem !important; font-weight: 700 !important;
+    background: #F9F9F7 !important; border: 1px solid #E0E3DF !important;
+    border-radius: 8px !important; font-weight: 700 !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 div[data-testid="stNumberInput"] label,
@@ -1252,7 +1266,7 @@ div[data-testid="stColumn"]:has(#mrk-chem),
 div[data-testid="stColumn"]:has(#mrk-env),
 div[data-testid="stColumn"]:has(#mrk-hist),
 div[data-testid="stColumn"]:has(#mrk-det) {
-    background: var(--surface-container-high) !important;
+    background: #FFFFFF !important;
     border-radius: 0.75rem !important;
     border: 1px solid rgba(192,201,191,0.3) !important;
     box-shadow: 0 2px 8px rgba(27,28,26,0.06) !important;
@@ -1330,14 +1344,15 @@ with top_l:
 <div style="padding:0.35rem 0 0.65rem;border-bottom:1px solid rgba(192,201,191,0.25)">
     <h2 style="font-family:Manrope,sans-serif;font-size:1.2rem;font-weight:800;
         color:var(--primary);margin:0">Agricultural Intelligence</h2>
-    <span style="display:block;height:2px;width:56px;background:rgba(47,113,68,0.6);
+    <span style="display:block;height:2px;width:56px;background:#4A8C5C;
             margin-top:6px;border-radius:999px"></span>
 </div>
 """, unsafe_allow_html=True)
 
 with top_t:
-    st.markdown('<div style="height:8px"></div><span id="theme-toggle-marker"></span>', unsafe_allow_html=True)
-    _theme_icon = "light_mode" if st.session_state.theme == "dark" else "dark_mode"
+    marker = "theme-toggle-marker-dark" if st.session_state.theme == "dark" else "theme-toggle-marker-light"
+    st.markdown(f'<div style="height:8px"></div><span id="{marker}"></span><span id="theme-toggle-marker"></span>', unsafe_allow_html=True)
+    _theme_icon = " "
     if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
         st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
         st.rerun()
@@ -1362,11 +1377,11 @@ with top_n:
 hero_l, hero_r = st.columns([3, 1])
 with hero_l:
     st.markdown("""
-<h1 style="font-family:Manrope,sans-serif;font-size:2.75rem;font-weight:900;color:var(--primary);
+<h1 style="font-family:Manrope,sans-serif;font-size:3rem;font-weight:800;color:#1E5C3A;
     letter-spacing:-0.025em;line-height:1.1;margin:0 0 0.875rem">
   Precise Agricultural<br>Intelligence
 </h1>
-<p style="color:var(--muted);font-size:1rem;font-weight:300;line-height:1.7;
+<p style="color:#404942;font-size:1rem;font-weight:400;line-height:1.55;
     max-width:560px;margin:0 0 1.5rem">
   Synthesize complex soil data, real-time climate metrics, and historical
   yield patterns to generate laboratory-grade crop recommendations.
@@ -1414,8 +1429,8 @@ col_img, col_chem = st.columns(2, gap="large")
 with col_img:
     st.markdown('<span id="mrk-soil-img"></span>', unsafe_allow_html=True)
     st.markdown("""
-<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
+<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:800;
+    color:#1E5C3A;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   <span class="material-symbols-outlined"
         style="color:#004425;font-size:1.6rem;font-variation-settings:'FILL' 1, 'wght' 600">image</span>
   Soil Specimen Analysis
@@ -1450,11 +1465,11 @@ def _npk_bar(val, lo, hi, vmax):
     else:
         rl, gw, rr = lo_pct, hi_pct - lo_pct, 100 - hi_pct
     return (
-        f"<div style='height:5px;background:#d8d7d3;border-radius:999px;"
+        f"<div style='height:5px;background:#e6e8e4;border-radius:999px;"
         f"overflow:hidden;display:flex;margin-top:5px'>"
-        f"<div style='width:{rl:.0f}%;background:#ef4444'></div>"
-        f"<div style='width:{gw:.0f}%;background:#22c55e'></div>"
-        f"<div style='width:{rr:.0f}%;background:#ef4444'></div>"
+        f"<div style='width:{rl:.0f}%;background:#FFB4AB'></div>"
+        f"<div style='width:{gw:.0f}%;background:#4A8C5C'></div>"
+        f"<div style='width:{rr:.0f}%;background:#FFB4AB'></div>"
         f"</div>"
     )
 
@@ -1462,8 +1477,8 @@ def _npk_bar(val, lo, hi, vmax):
 with col_chem:
     st.markdown('<span id="mrk-chem"></span>', unsafe_allow_html=True)
     st.markdown("""
-<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
+<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:800;
+    color:#1E5C3A;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   <span class="material-symbols-outlined"
         style="color:#004425;font-size:1.6rem;font-variation-settings:'FILL' 1, 'wght' 600">biotech</span>
   Chemical Profile
@@ -1491,7 +1506,7 @@ with env_col:
     st.markdown('<span id="mrk-env"></span>', unsafe_allow_html=True)
     st.markdown("""
 <h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
+    color:#1E5C3A;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
     <span class="material-symbols-outlined" style="color:#004425;font-size:1.5rem;font-variation-settings:'FILL' 1, 'wght' 600">public</span>
   Auto-Fill Climate Data
 </h3>
@@ -1591,7 +1606,7 @@ with col_hist:
     st.markdown('<span id="mrk-hist"></span>', unsafe_allow_html=True)
     st.markdown("""
 <h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
+    color:#1E5C3A;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   &#128202; Farm History
 </h3>
 """, unsafe_allow_html=True)
@@ -1613,7 +1628,7 @@ with col_det:
     st.markdown('<span id="mrk-det"></span>', unsafe_allow_html=True)
     st.markdown("""
 <h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
+    color:#1E5C3A;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   &#127806; Farm Details
 </h3>
 """, unsafe_allow_html=True)
