@@ -1430,7 +1430,7 @@ div[data-testid="stColumn"]:has(#mrk-det) {
     border-radius: 0.75rem !important;
     border: 1px solid rgba(192,201,191,0.3) !important;
     box-shadow: 0 2px 8px rgba(27,28,26,0.06) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 /* Inner block padding */
 div[data-testid="stColumn"]:has(#mrk-soil-img) > div[data-testid="stVerticalBlock"],
