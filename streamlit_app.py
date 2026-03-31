@@ -15,7 +15,7 @@ from torchvision import models, transforms
 # ── Page config ────────────────────────────────────────────────
 st.set_page_config(
     page_title="Multimodal Crop & Fertilizer Recommendation",
-    page_icon="🌱",
+    page_icon="🧪",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -1159,32 +1159,62 @@ section[data-testid="stSidebar"] > div {
 }
 [data-testid="stSidebarNav"] { display: none !important; }
 button[data-testid="collapsedControl"] { background: #214130 !important; color: white !important; }
-/* style the theme toggle button in sidebar */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
-    background: rgba(255,255,255,0.08) !important;
-    color: rgba(255,255,255,0.75) !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
-    border-radius: 0.5rem !important;
-    font-size: 12px !important;
-    height: 2.25rem !important;
-    font-family: 'Work Sans', sans-serif !important;
-    font-weight: 600 !important;
-}
 
 /* ── Primary / Secondary buttons (main area) ── */
 .main button[data-testid="baseButton-primary"],
 .block-container button[data-testid="baseButton-primary"] {
-    background: #004425 !important; color: #fff !important;
+    background: #2f7144 !important; color: #fff !important;
     border: none !important; border-radius: 0.75rem !important;
     font-weight: 700 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 1rem !important; height: 3.25rem !important;
 }
+.main button[kind="primary"],
+.block-container button[kind="primary"] {
+    background: #2f7144 !important; color: #fff !important;
+}
+.main button[data-testid="baseButton-primary"]:hover,
+.block-container button[data-testid="baseButton-primary"]:hover {
+    background: #1e5c3a !important;
+}
 .main button[data-testid="baseButton-secondary"],
 .block-container button[data-testid="baseButton-secondary"] {
     background: #ffffff !important; color: #404942 !important;
-    border: 2px solid rgba(0,68,37,0.18) !important; border-radius: 0.75rem !important;
+    border: 2px solid rgba(47,113,68,0.22) !important; border-radius: 0.75rem !important;
     font-weight: 700 !important; font-family: 'Manrope',sans-serif !important;
     font-size: 0.9rem !important; height: 3.25rem !important;
+}
+.main button[kind="secondary"],
+.block-container button[kind="secondary"] {
+    border: 2px solid rgba(47,113,68,0.22) !important;
+}
+
+/* ── Topbar theme toggle ── */
+div[data-testid="stButton"]:has(button[title="Toggle theme"]) {
+    position: fixed !important;
+    top: 14px !important;
+    right: 96px !important;
+    z-index: 1001 !important;
+    width: 34px !important;
+    height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+button[title="Toggle theme"] {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    border: none !important;
+    background: rgba(227,226,223,0.9) !important;
+    color: #1e5c3a !important;
+    font-family: 'Material Symbols Outlined' !important;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+button[title="Toggle theme"]:hover {
+    background: rgba(227,226,223,1) !important;
 }
 
 /* ── Form inputs ── */
@@ -1276,20 +1306,8 @@ with st.sidebar:
     <span class="material-symbols-outlined" style="color:rgba(255,255,255,0.6);font-size:18px">science</span>
     Analysis
   </a>
-  <a style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-      color:rgba(255,255,255,0.6);border-radius:999px;
-      font-family:Manrope,sans-serif;font-size:13px;font-weight:700;text-decoration:none">
-    <span class="material-symbols-outlined" style="color:rgba(255,255,255,0.6);font-size:18px">settings</span>
-    Settings
-  </a>
 </nav>
 """, unsafe_allow_html=True)
-
-    # Dark / Light mode toggle
-    _theme_icon  = "☀️ Light Mode" if st.session_state.theme == "dark" else "🌙 Dark Mode"
-    if st.button(_theme_icon, type="secondary", use_container_width=True):
-        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-        st.rerun()
 
     st.markdown("""
 <div style="margin-top:1.5rem;padding:1rem 0.25rem 0;border-top:1px solid rgba(255,255,255,0.1);
@@ -1309,13 +1327,13 @@ st.markdown("""
      border-bottom:1px solid rgba(192,201,191,0.25);
      display:flex;justify-content:space-between;align-items:center;
      margin-bottom:2rem">
-  <h2 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:700;
-      color:#1e5c3a;margin:0">Agricultural Intelligence</h2>
+  <div style="display:flex;flex-direction:column">
+    <h2 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:700;
+        color:#1e5c3a;margin:0">Agricultural Intelligence</h2>
+    <span style="height:2px;width:56px;background:rgba(47,113,68,0.6);
+        margin-top:4px;border-radius:999px"></span>
+  </div>
   <div style="display:flex;gap:2px">
-    <div style="width:34px;height:34px;border-radius:50%;display:flex;
-         align-items:center;justify-content:center">
-      <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">dark_mode</span>
-    </div>
     <div style="width:34px;height:34px;border-radius:50%;display:flex;
          align-items:center;justify-content:center">
       <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">settings</span>
@@ -1327,6 +1345,11 @@ st.markdown("""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+_theme_icon = "light_mode" if st.session_state.theme == "dark" else "dark_mode"
+if st.button(_theme_icon, key="theme_toggle", help="Toggle theme", type="secondary"):
+    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+    st.rerun()
 
 # ── HERO HEADER ───────────────────────────────────────────────────
 hero_l, hero_r = st.columns([3, 1])
