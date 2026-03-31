@@ -41,7 +41,7 @@ if "theme" not in st.session_state:
     st.session_state.theme = "light"
 
 if st.session_state.theme == "dark":
-    THEME_VARS = """
+    THEME_VARS = """<style>
 :root {
   --bg: #141414;
   --surface: #1d1d1d;
@@ -61,10 +61,14 @@ if st.session_state.theme == "dark":
   --on-secondary-fixed-variant: #cfe3ff;
   --tertiary: #a56b6d;
   --danger: #ff6b6b;
+  --card: #1d1d1d;
+  --border: #2f2f2f;
+  --pill: #1a3a1a;
+  --sidebar: #1a1a1a;
 }
-"""
+</style>"""
 else:
-    THEME_VARS = """
+    THEME_VARS = """<style>
 :root {
   --bg: #fbf9f6;
   --surface: #ffffff;
@@ -84,8 +88,12 @@ else:
   --on-secondary-fixed-variant: #224a6b;
   --tertiary: #713638;
   --danger: #ff4d4f;
+  --card: #ffffff;
+  --border: #eaeaea;
+  --pill: #e6f7ed;
+  --sidebar: #f7f8fa;
 }
-"""
+</style>"""
 
 # ── Paths ──────────────────────────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -1122,19 +1130,6 @@ CUSTOM_CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
-:root {{
-  --bg: #FFFFFF;
-  --sidebar: #F7F8FA;
-  --card: #FDFDFD;
-  --border: #EAEAEA;
-  --text: #1B1C1A;
-  --muted: #6B7280;
-  --green: #1E5631;
-  --green-dark: #0f4a27;
-  --light-blue: #EBF5FF;
-  --pill: #E6F7ED;
-}}
-
 html, body, [class*="css"] {{ font-family: Inter, "Google Sans", sans-serif; color: var(--text); }}
 .stApp, .main {{ background: var(--bg) !important; }}
 #MainMenu, header, footer {{ visibility: hidden; }}
@@ -1188,6 +1183,7 @@ button[data-testid="baseButton-secondary"] {{ background: #F0F0F0 !important; co
 </style>
 """
 
+st.markdown(THEME_VARS, unsafe_allow_html=True)
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # Sidebar
@@ -1213,8 +1209,11 @@ with c1:
     st.markdown("<h1>Precise Agricultural Intelligence</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color:#6B7280'>Seamlessly integrate soil data, chemical properties, and atmospheric conditions to unlock maximum potential yield through our specialized advisor pipeline.</p>", unsafe_allow_html=True)
 with c2:
-    st.button("Dark Mode", type="secondary")
-    st.markdown("<div class='custom-card' style='background:#EBF5FF;border-radius:8px'>" 
+    _btn_lbl = "☀️ Light Mode" if st.session_state.theme == "dark" else "🌙 Dark Mode"
+    if st.button(_btn_lbl, type="secondary"):
+        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+        st.rerun()
+    st.markdown("<div class='custom-card' style='background:#EBF5FF;border-radius:8px'>"
                 "<div style='font-weight:700;margin-bottom:8px'>Farmer Unit Guide</div>"
                 "<div>Yield: <b>t/ha</b></div><div>NPK: <b>kg/ha</b></div><div>Area: <b>1 acre = 0.4 ha</b></div></div>", unsafe_allow_html=True)
 
@@ -1310,7 +1309,7 @@ with r3:
     with st.container():
         st.markdown("<div id='card-farm-details'></div>", unsafe_allow_html=True)
         st.markdown("<h4>Farm Details</h4>", unsafe_allow_html=True)
-        season = st.selectbox("Season", ["Kharif (Monsoon)", "Rabi (Winter)", "Zaid (Summer)"])
+        season = st.selectbox("Season", ["Kharif", "Rabi", "Zaid"])
         irrig  = st.selectbox("Irrigation Type", ["Canal","Drip","Rainfed","Sprinkler"])
         prev   = st.selectbox("Previous Crop", ["Wheat","Rice","Maize","Cotton","Potato","Sugarcane","Tomato"])
         region = st.selectbox("Geographic Region", ["South","Central","North","East","West"])
@@ -1369,30 +1368,57 @@ if st.session_state.last_result:
     soil_fert = res["soil_fert"]
     crop_recs = res["crop_recs"]
 
-    top = crop_recs[0]
+    CROP_ICONS = {
+        "Cotton":"🌿","Maize":"🌽","Rice":"🌾","Wheat":"🌾","Sugarcane":"🎋",
+        "Potato":"🥔","Tomato":"🍅","Groundnut":"🥜","Soybean":"🫘",
+        "Sunflower":"🌻","Barley":"🌾","Mustard":"🌼","Chickpea":"🫘",
+        "Watermelon":"🍉","Cucumber":"🥒","Pumpkin":"🎃","Mango":"🥭",
+        "Banana":"🍌","Cashew":"🌰","Rubber":"🌳","Tea":"🍵","Coffee":"☕",
+        "Tapioca":"🌿","Turmeric":"🟡","Ginger":"🫚","Pineapple":"🍍",
+        "Jackfruit":"🍈","Jute":"🌿","Sorghum":"🌾","Sesame":"🌿",
+        "Linseed":"🌼","Safflower":"🌼","Moong":"🫘","Taro":"🌿",
+        "Spinach":"🥬","Muskmelon":"🍈",
+    }
+    SOIL_COLORS = {
+        "Red Soil":"#C62828","Black Soil":"#37474F","Alluvial Soil":"#6D4C41",
+        "Clay Soil":"#F57F17","Laterite Soil":"#BF360C","Yellow Soil":"#F9A825",
+        "Sandy Soil":"#8D6E63",
+    }
+    top      = crop_recs[0]
+    top_icon = CROP_ICONS.get(top["name"], "🌱")
+    soil_col = SOIL_COLORS.get(soil_name, "#0f5238")
+
+    # Soil detection hero banner
+    st.markdown(f"""
+<div style='background:{soil_col};padding:1.5rem 2rem;border-radius:12px;margin-bottom:1rem;color:#fff'>
+  <div style='font-size:10px;letter-spacing:0.2em;opacity:0.75;margin-bottom:4px'>DETECTED SOIL TYPE</div>
+  <div style='font-size:2rem;font-weight:800;font-family:Manrope,sans-serif'>{soil_name}</div>
+  <span style='background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:999px;font-size:13px;font-weight:600'>
+    Confidence: {confidence:.1f}%</span>
+</div>""", unsafe_allow_html=True)
+
     with st.container():
         st.markdown("<div id='card-results-hero'></div>", unsafe_allow_html=True)
-        st.markdown(
-            f"""
-<div style='display:grid;grid-template-columns:1fr 2fr;gap:16px;'>
-  <img src='https://lh3.googleusercontent.com/aida-public/AB6AXuB5sOP_w5upSSi1oVtLYbAxHzE38HGUNUPwE-2QHpSLKoAvBYZ05HkbeTebObk5JR6Oia0lIREuGPIJPGmiCsqpsdu0PV3bR7NeN7pNmYKxkiNzcgRoQ3XPP1puoUPiFHW8PLKihoLTW2Oj5YK_PggzfEG3rvfSqPilbfRdodkVyp7DanEglXjT_4vIaErxdz9-lxJkrKOjLwZ8F-HvsJnKE_pMec5QHUyr0f9H3LeA-k-HhYEseTWgVE8zmbXdKAEu4-WGsFl5egk' style='width:100%;border-radius:10px'/>
+        st.markdown(f"""
+<div style='display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem'>
+  <div style='font-size:5rem;line-height:1'>{top_icon}</div>
   <div>
-    <div style='font-size:10px;letter-spacing:0.2em;color:#9aa0a6'>RANK #1 HIGHLY RECOMMENDED</div>
-    <div style='display:flex;justify-content:space-between;align-items:center'>
-      <div style='font-size:28px;font-weight:800'>{top['name']}</div>
-      <div style='background:#E6F7ED;padding:6px 10px;border-radius:10px;font-weight:700'>{confidence:.0f}% Match</div>
+    <div style='font-size:10px;letter-spacing:0.2em;color:#9aa0a6;margin-bottom:4px'>RANK #1 · HIGHLY RECOMMENDED</div>
+    <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px'>
+      <div style='font-size:2rem;font-weight:800;font-family:Manrope,sans-serif;color:var(--text)'>{top['name']}</div>
+      <div style='background:var(--pill);padding:6px 14px;border-radius:999px;font-weight:700;
+          color:var(--primary);font-size:13px'>{confidence:.0f}% Match</div>
     </div>
-    <p style='color:#6B7280'>Based on your soil's properties, {top['name']} is ideal for the upcoming {season} season.</p>
-    <div class='custom-card' style='background:#F7F8FA;border:0'>
-      <div style='font-weight:700'>Scientific Fertilizer Plan</div>
-      <div>Type: {top['fertilizer']}</div>
-      <div>Ratio: {top['npk']}</div>
+    <p style='color:var(--muted);margin:8px 0 12px'>
+      Based on your soil properties, <strong>{top['name']}</strong> is ideal for the upcoming <strong>{season}</strong> season.</p>
+    <div style='background:var(--surface-2);border-radius:10px;padding:1rem'>
+      <div style='font-weight:700;margin-bottom:6px;font-family:Manrope,sans-serif;color:var(--text)'>Scientific Fertilizer Plan</div>
+      <div style='color:var(--muted);font-size:13px'>Type: <strong style='color:var(--text)'>{top['fertilizer']}</strong></div>
+      <div style='color:var(--muted);font-size:13px;margin-top:4px'>N:P:K — <strong style='color:var(--text)'>{top['npk']}</strong></div>
     </div>
   </div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
+</div>""", unsafe_allow_html=True)
 
     with st.container():
         st.markdown("<div id='card-results-chart'></div>", unsafe_allow_html=True)
@@ -1421,41 +1447,39 @@ if st.session_state.last_result:
     with r2:
         if len(crop_recs) > 1:
             c2 = crop_recs[1]
+            icon2 = CROP_ICONS.get(c2["name"], "🌱")
+            rank2_pct = max(10, int(confidence) - 12)
             st.markdown("<div id='card-results-2'></div>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-<div style='display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;'>
-  <img src='https://images.unsplash.com/photo-1446057032654-9d8885db76c6?auto=format&fit=crop&w=300&q=80' style='width:96px;height:96px;border-radius:10px;object-fit:cover'/>
+            st.markdown(f"""
+<div style='display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem'>
+  <div style='font-size:3.5rem;line-height:1;text-align:center'>{icon2}</div>
   <div>
     <div style='font-size:10px;letter-spacing:0.2em;color:#9aa0a6'>RANK #2</div>
-    <div style='display:flex;justify-content:space-between;align-items:center'>
-      <div style='font-size:18px;font-weight:800'>{c2['name']}</div>
-      <div style='background:#EAF2FF;padding:4px 8px;border-radius:999px;font-weight:700;font-size:11px'>82% Match</div>
+    <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px'>
+      <div style='font-size:18px;font-weight:800;font-family:Manrope,sans-serif;color:var(--text)'>{c2['name']}</div>
+      <div style='background:#EAF2FF;padding:3px 8px;border-radius:999px;font-weight:700;font-size:11px;color:#3c6184'>{rank2_pct}% Match</div>
     </div>
-    <div style='color:#6B7280;font-size:12px'>Strong resilience</div>
+    <div style='color:var(--muted);font-size:12px;margin-top:2px'>{c2['fertilizer']} · {c2['npk']}</div>
   </div>
-</div>
-""",
-                unsafe_allow_html=True,
-            )
+</div>""", unsafe_allow_html=True)
     with r3:
         if len(crop_recs) > 2:
             c3 = crop_recs[2]
+            icon3 = CROP_ICONS.get(c3["name"], "🌱")
+            rank3_pct = max(10, int(confidence) - 24)
             st.markdown("<div id='card-results-3'></div>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-<div style='display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;'>
-  <img src='https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=300&q=80' style='width:96px;height:96px;border-radius:10px;object-fit:cover'/>
+            st.markdown(f"""
+<div style='display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem'>
+  <div style='font-size:3.5rem;line-height:1;text-align:center'>{icon3}</div>
   <div>
     <div style='font-size:10px;letter-spacing:0.2em;color:#9aa0a6'>RANK #3</div>
-    <div style='display:flex;justify-content:space-between;align-items:center'>
-      <div style='font-size:18px;font-weight:800'>{c3['name']}</div>
-      <div style='background:#EAF2FF;padding:4px 8px;border-radius:999px;font-weight:700;font-size:11px'>75% Match</div>
+    <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px'>
+      <div style='font-size:18px;font-weight:800;font-family:Manrope,sans-serif;color:var(--text)'>{c3['name']}</div>
+      <div style='background:#EAF2FF;padding:3px 8px;border-radius:999px;font-weight:700;font-size:11px;color:#3c6184'>{rank3_pct}% Match</div>
     </div>
-    <div style='color:#6B7280;font-size:12px'>Good market value</div>
+    <div style='color:var(--muted);font-size:12px;margin-top:2px'>{c3['fertilizer']} · {c3['npk']}</div>
   </div>
-</div>
-""",
-                unsafe_allow_html=True,
-            )
+</div>""", unsafe_allow_html=True)
 
