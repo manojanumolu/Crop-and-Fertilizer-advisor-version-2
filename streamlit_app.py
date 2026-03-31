@@ -1174,6 +1174,11 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 .block-container button[kind="primary"] {
     background: var(--primary-2) !important; color: #fff !important;
 }
+.main button[kind="primary"]:active,
+.block-container button[kind="primary"]:active {
+    transform: scale(0.98);
+    transition: transform 120ms ease;
+}
 .main button[data-testid="baseButton-primary"]:hover,
 .block-container button[data-testid="baseButton-primary"]:hover {
     background: var(--primary) !important;
@@ -1193,6 +1198,19 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
     height: 36px !important;
     min-height: 36px !important;
     border-radius: 10px !important;
+    border: 1px solid #E0E3DF !important;
+    background: #F9F9F7 !important;
+    color: #1E5C3A !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+button[kind="tertiary"] {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    border-radius: 999px !important;
     border: 1px solid #E0E3DF !important;
     background: #F9F9F7 !important;
     color: #1E5C3A !important;
@@ -1333,7 +1351,7 @@ with top_l:
 
 with top_t:
     st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-    _theme_icon = "☀"
+    _theme_icon = "☾" if st.session_state.theme == "light" else "☀"
     if st.button(_theme_icon, key="theme_toggle", help="Toggle theme", type="tertiary"):
         st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
         st.rerun()
@@ -1467,16 +1485,16 @@ with col_chem:
 """, unsafe_allow_html=True)
     cr1, cr2 = st.columns(2)
     with cr1:
-        n = st.number_input("Nitrogen (N) (mg/kg)", 0.0, 200.0, 90.0)
+        n = st.number_input("Nitrogen (N) (mg/kg)", 0.0, 200.0, 90.0, help="Nitrogen level in mg/kg")
         st.markdown(_npk_bar(n, 80, 160, 200), unsafe_allow_html=True)
         st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
-        k = st.number_input("Potassium (K) (mg/kg)", 0.0, 200.0, 43.0)
+        k = st.number_input("Potassium (K) (mg/kg)", 0.0, 200.0, 43.0, help="Potassium level in mg/kg")
         st.markdown(_npk_bar(k, 40, 160, 200), unsafe_allow_html=True)
     with cr2:
-        p = st.number_input("Phosphorus (P) (mg/kg)", 0.0, 200.0, 42.0)
+        p = st.number_input("Phosphorus (P) (mg/kg)", 0.0, 200.0, 42.0, help="Phosphorus level in mg/kg")
         st.markdown(_npk_bar(p, 30, 100, 200), unsafe_allow_html=True)
         st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
-        ph = st.number_input("Soil pH (ph)", 3.0, 10.0, 6.5, step=0.1)
+        ph = st.number_input("Soil pH (ph)", 3.0, 10.0, 6.5, step=0.1, help="Soil pH value")
         st.markdown(_npk_bar(ph, 6.0, 7.5, 10.0), unsafe_allow_html=True)
 
 st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
@@ -1499,6 +1517,7 @@ with env_col:
             "Select Your State",
             options=["-- Select State --"] + sorted(INDIA_STATES_DISTRICTS.keys()),
             index=0,
+            help="Choose your state to fetch local climate",
         )
     with ec2:
         if sel_state and sel_state != "-- Select State --":
@@ -1506,15 +1525,16 @@ with env_col:
                 "Select Your District",
                 options=["-- Select District --"] + INDIA_STATES_DISTRICTS[sel_state],
                 index=0,
+                help="Choose your district",
             )
         else:
             sel_district = "-- Select District --"
             st.selectbox("Select Your District", options=["-- Select State First --"], disabled=True)
     with ec3:
-        village = st.text_input("Enter Village / Town Name", placeholder="e.g. Ramtek")
+        village = st.text_input("Enter Village / Town Name", placeholder="e.g. Ramtek", help="Optional village or town for better location context")
     with ec4:
         st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
-        fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
+        fetch_btn = st.button("🌤 Fetch Local Data", type="primary", use_container_width=True)
 
     if fetch_btn:
         if sel_state == "-- Select State --":
@@ -1572,11 +1592,11 @@ with env_col:
 
     et1, et2, et3 = st.columns(3)
     with et1:
-        temp = st.number_input("Temperature (\u00b0C)", 10.0, 45.0, float(st.session_state.auto_temp), step=0.1)
+        temp = st.number_input("Temperature (\u00b0C)", 10.0, 45.0, float(st.session_state.auto_temp), step=0.1, help="Average local temperature")
     with et2:
-        hum  = st.number_input("Humidity (%)", 14.0, 100.0, float(st.session_state.auto_hum), step=0.1)
+        hum  = st.number_input("Humidity (%)", 14.0, 100.0, float(st.session_state.auto_hum), step=0.1, help="Average relative humidity")
     with et3:
-        rain = st.number_input("Rainfall (mm)", 200.0, 3000.0, float(st.session_state.auto_rain), step=1.0)
+        rain = st.number_input("Rainfall (mm)", 200.0, 3000.0, float(st.session_state.auto_rain), step=1.0, help="Annualized rainfall in mm")
 
 st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 
@@ -1591,8 +1611,8 @@ with col_hist:
   &#128202; Farm History
 </h3>
 """, unsafe_allow_html=True)
-    yld  = st.number_input("Yield Last Season (t/ha)", 0.0, 15000.0, 2500.0)
-    fert = st.number_input("Fertilizer Used (kg/ha)", 0.0, 1000.0, 120.0)
+    yld  = st.number_input("Yield Last Season (t/ha)", 0.0, 15000.0, 2500.0, help="Last season crop yield")
+    fert = st.number_input("Fertilizer Used (kg/ha)", 0.0, 1000.0, 120.0, help="Total fertilizer used last season")
     st.markdown("""
 <div style="background:#eff6ff;padding:0.75rem 0.875rem;border-radius:0.5rem;
      display:flex;align-items:start;gap:8px;border:1px solid #bfdbfe;margin-top:0.375rem">
@@ -1624,10 +1644,10 @@ with col_det:
     REGION_INTERN = {"South Zone": "South", "Central Zone": "Central",
                      "North Zone": "North", "East Zone": "East", "West Zone": "West"}
 
-    season_disp = st.selectbox("Current Season",    SEASON_OPTS)
-    irrig_disp  = st.selectbox("Irrigation System", IRRIG_OPTS)
-    prev        = st.selectbox("Previous Crop",      PREV_OPTS)
-    region_disp = st.selectbox("Geographic Region",  REGION_OPTS)
+    season_disp = st.selectbox("Current Season",    SEASON_OPTS, help="Select current farming season")
+    irrig_disp  = st.selectbox("Irrigation System", IRRIG_OPTS, help="Select irrigation setup")
+    prev        = st.selectbox("Previous Crop",      PREV_OPTS, help="Select last grown crop")
+    region_disp = st.selectbox("Geographic Region",  REGION_OPTS, help="Select your region")
 
     season = SEASON_INTERN[season_disp]
     irrig  = IRRIG_INTERN[irrig_disp]
@@ -1639,7 +1659,7 @@ st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 btn_l, btn_r = st.columns([3, 2], gap="large")
 with btn_l:
     analyze_clicked = st.button(
-        "📊 Analyze Soil & Predict Crop", type="primary", use_container_width=True
+        "🔍 Analyze Soil & Predict Crop", type="primary", use_container_width=True
     )
 with btn_r:
     st.button(
