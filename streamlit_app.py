@@ -1095,24 +1095,37 @@ def get_climate_data(village, district, state):
             location_label = f"{district}, {state}"
             note = "District coordinates used"
 
+        # Daily: temp + rain for 10-year average (2014-2023)
+        # Hourly: humidity from ERA5 for accurate mean (avoids daily-aggregate bias)
         climate_url = (
             "https://archive-api.open-meteo.com/v1/archive"
             f"?latitude={lat}&longitude={lon}"
             "&start_date=2014-01-01&end_date=2023-12-31"
-            "&daily=temperature_2m_mean,precipitation_sum,relative_humidity_2m_mean"
+            "&daily=temperature_2m_mean,precipitation_sum"
+            "&hourly=relative_humidity_2m"
             "&timezone=Asia%2FKolkata"
         )
-        climate_resp = requests.get(climate_url, timeout=30)
+        climate_resp = requests.get(climate_url, timeout=60)
         climate_data = climate_resp.json()
-        daily = climate_data.get("daily", {})
+        daily  = climate_data.get("daily", {})
+        hourly = climate_data.get("hourly", {})
 
-        temps = [t for t in daily.get("temperature_2m_mean", []) if t is not None]
-        hums  = [h for h in daily.get("relative_humidity_2m_mean", []) if h is not None]
-        rains = [r for r in daily.get("precipitation_sum", []) if r is not None]
+        temps_all = daily.get("temperature_2m_mean", [])
+        rains_all = daily.get("precipitation_sum", [])
+        hums_all  = hourly.get("relative_humidity_2m", [])
 
-        avg_temp    = round(sum(temps) / len(temps), 1) if temps else 25.0
-        avg_hum     = round(sum(hums) / len(hums), 1) if hums else 60.0
-        annual_rain = round(sum(rains) / (len(rains) / 365), 1) if rains else 1000.0
+        # Temperature: mean of available daily values
+        temps    = [t for t in temps_all if t is not None]
+        avg_temp = round(sum(temps) / len(temps), 1) if temps else 25.0
+
+        # Rainfall: treat None (dry days) as 0mm; divide by actual total days
+        n_days      = len(temps_all) or 3652
+        rains       = [r if r is not None else 0.0 for r in rains_all]
+        annual_rain = round(sum(rains) / (n_days / 365.0), 1) if rains else 1000.0
+
+        # Humidity: mean of all hourly ERA5 values (complete, no seasonal gaps)
+        hums    = [h for h in hums_all if h is not None]
+        avg_hum = round(sum(hums) / len(hums), 1) if hums else 60.0
 
         return {
             "location":    location_label,
