@@ -1333,10 +1333,10 @@ with top_l:
 
 with top_t:
     st.markdown('<div style="height:8px"></div><span id="theme-toggle-marker"></span>', unsafe_allow_html=True)
-    _theme_icon = "☀" if st.session_state.theme == "dark" else "🌙"
+    _theme_icon = ":sun_with_face:" if st.session_state.theme == "dark" else ":crescent_moon:"
     if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
-    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-    st.rerun()
+        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+        st.rerun()
 
 with top_s:
     st.markdown('''
