@@ -1079,10 +1079,12 @@ def get_climate_data(village, district, state):
                 results = geo_data.get("results", [])
                 india_results = [r for r in results if r.get("country_code", "").upper() == "IN"]
                 state_results = [r for r in india_results if state.lower() in r.get("admin1", "").lower()]
-                best = state_results[0] if state_results else (india_results[0] if india_results else None)
-                if best:
-                    lat = best["latitude"]
-                    lon = best["longitude"]
+                # Only accept a result that matches the selected state.
+                # Do NOT fall back to india_results[0] — that picks same-named
+                # villages in other states (e.g. Bheemavaram in AP vs Telangana).
+                if state_results:
+                    lat = state_results[0]["latitude"]
+                    lon = state_results[0]["longitude"]
                     location_label = f"{village}, {district}, {state}"
                     note = "Village location found ✓"
                 else:
