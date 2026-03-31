@@ -1226,13 +1226,37 @@ div[data-testid="stHorizontalBlock"]:has(#topbar-inline-marker) > div[data-testi
     div[data-testid="stHorizontalBlock"]:has(#topbar-inline-marker) {
         display: grid !important;
         grid-template-columns: 40px minmax(0, 1fr) 40px 40px 40px !important;
+        grid-template-rows: auto auto !important;
         align-items: center !important;
         column-gap: 8px !important;
+        row-gap: 8px !important;
+    }
+    div[data-testid="stColumn"]:has(#top-menu-col) {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+    div[data-testid="stColumn"]:has(#top-title-col) {
+        grid-column: 2 / 6 !important;
+        grid-row: 1 !important;
+    }
+    div[data-testid="stColumn"]:has(#top-theme-col) {
+        grid-column: 3 !important;
+        grid-row: 2 !important;
+    }
+    div[data-testid="stColumn"]:has(#top-settings-col) {
+        grid-column: 4 !important;
+        grid-row: 2 !important;
+    }
+    div[data-testid="stColumn"]:has(#top-notify-col) {
+        grid-column: 5 !important;
+        grid-row: 2 !important;
     }
     #topbar-title {
-        font-size: clamp(1rem, 5.6vw, 1.7rem) !important;
-        line-height: 1.1 !important;
+        font-size: clamp(1.45rem, 6vw, 1.95rem) !important;
+        line-height: 1.12 !important;
         white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
     }
     section[data-testid="stSidebar"] {
         position: fixed !important;
@@ -1251,6 +1275,8 @@ div[data-testid="stHorizontalBlock"]:has(#topbar-inline-marker) > div[data-testi
 }
 @media (min-width: 901px) {
     #menu-toggle-marker { display: none !important; }
+    div[data-testid="stColumn"]:has(#top-menu-col) { display: none !important; }
+    .st-key-sidebar_close_btn { display: none !important; }
     section[data-testid="stSidebar"] {
         transform: none !important;
         position: relative !important;
@@ -1408,13 +1434,14 @@ st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 top_m, top_l, top_t, top_s, top_n = st.columns([1, 9, 1, 1, 1], gap="small")
 
 with top_m:
-    st.markdown('<span id="topbar-inline-marker"></span><span id="menu-toggle-marker"></span><div style="height:8px"></div>', unsafe_allow_html=True)
+    st.markdown('<span id="topbar-inline-marker"></span><span id="menu-toggle-marker"></span><span id="top-menu-col"></span><div style="height:8px"></div>', unsafe_allow_html=True)
     if not st.session_state.sidebar_open:
         if st.button("☰", key="sidebar_toggle", help="Open navigation", type="tertiary"):
             st.session_state.sidebar_open = True
             st.rerun()
 
 with top_l:
+    st.markdown('<span id="top-title-col"></span>', unsafe_allow_html=True)
     st.markdown("""
 <div style="padding:0.35rem 0 0.65rem;border-bottom:1px solid rgba(192,201,191,0.25)">
     <h2 id="topbar-title" style="font-family:Manrope,sans-serif;font-size:1.2rem;font-weight:800;
@@ -1425,6 +1452,7 @@ with top_l:
 """, unsafe_allow_html=True)
 
 with top_t:
+    st.markdown('<span id="top-theme-col"></span>', unsafe_allow_html=True)
     st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
     _theme_icon = "☾" if st.session_state.theme == "light" else "☀"
     if st.button(_theme_icon, key="theme_toggle", help="Toggle theme", type="tertiary"):
@@ -1432,10 +1460,12 @@ with top_t:
         st.rerun()
 
 with top_s:
+    st.markdown('<span id="top-settings-col"></span>', unsafe_allow_html=True)
     st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
     st.button("⚙", key="settings_icon", help="Settings", type="tertiary")
 
 with top_n:
+    st.markdown('<span id="top-notify-col"></span>', unsafe_allow_html=True)
     st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
     st.button("🔔", key="notifications_icon", help="Notifications", type="tertiary")
 
@@ -1598,9 +1628,9 @@ with env_col:
             sel_district = "-- Select District --"
             st.selectbox("🏛 Select Your District", options=["-- Select State First --"], disabled=True, help="Choose your district")
     with ec3:
-        village = st.text_input("🗺 Enter Village / Town Name", placeholder="e.g. Ramtek", help="Optional village or town for better location context")
+        village = st.text_input("🗺 Enter Village / Town", placeholder="e.g. Ramtek", help="Optional village or town for better location context")
     with ec4:
-        st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
         fetch_btn = st.button("🌤 Fetch Local Data", type="primary", use_container_width=True)
 
     if fetch_btn:
