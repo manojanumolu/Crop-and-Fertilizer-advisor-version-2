@@ -1462,9 +1462,9 @@ st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 (env_col,) = st.columns(1)
 with env_col:
     st.markdown('<span id="mrk-env"></span>', unsafe_allow_html=True)
-        st.markdown("""
+    st.markdown("""
 <h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
-        color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
+    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
     <span class="material-symbols-outlined" style="color:#004425;font-size:1.5rem;font-variation-settings:'FILL' 1, 'wght' 600">public</span>
   Auto-Fill Climate Data
 </h3>
