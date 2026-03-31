@@ -1500,6 +1500,43 @@ div[data-testid="stColumn"]:has(#mrk-det) > div[data-testid="stVerticalBlock"] {
 
 st.markdown(THEME_VARS, unsafe_allow_html=True)
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+if st.session_state.theme == "dark":
+    st.markdown(
+        """
+<style>
+/* Dark-only visibility fixes requested by user */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #243028 !important;
+    border-color: #5d6a61 !important;
+}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] span,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] div {
+    color: #eef6ef !important;
+    font-weight: 800 !important;
+}
+div[data-testid="stSelectbox"] svg {
+    fill: #d7e5d9 !important;
+}
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input {
+    background: #243028 !important;
+    border-color: #5d6a61 !important;
+    color: #eef6ef !important;
+    font-weight: 800 !important;
+}
+div[data-testid="stTextInput"] input::placeholder {
+    color: #c8d7ca !important;
+    opacity: 1 !important;
+}
+div[data-testid="stFileUploader"] button {
+    color: #1b221d !important;
+    font-weight: 800 !important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
 mobile_sidebar_transform = "translateX(0)" if st.session_state.sidebar_open else "translateX(-105%)"
 st.markdown(
         f"""
