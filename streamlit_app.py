@@ -1327,9 +1327,9 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
     height: 36px !important;
     min-height: 36px !important;
     border-radius: 999px !important;
-    border: 1px solid #E0E3DF !important;
-    background: #F9F9F7 !important;
-    color: #1E5C3A !important;
+    border: 1px solid var(--outline) !important;
+    background: var(--surface-container-lowest) !important;
+    color: var(--primary-2) !important;
     font-size: 20px !important;
     font-weight: 700 !important;
     padding: 0 !important;
@@ -1414,9 +1414,9 @@ button[kind="tertiary"] {
     height: 36px !important;
     min-height: 36px !important;
     border-radius: 999px !important;
-    border: 1px solid #E0E3DF !important;
-    background: #F9F9F7 !important;
-    color: #1E5C3A !important;
+    border: 1px solid var(--outline) !important;
+    background: var(--surface-container-lowest) !important;
+    color: var(--primary-2) !important;
     font-size: 20px !important;
     font-weight: 700 !important;
     padding: 0 !important;
@@ -1428,8 +1428,8 @@ button[kind="tertiary"] {
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background: #F9F9F7;
-    border: 1px solid #E0E3DF;
+    background: var(--surface-container-lowest);
+    border: 1px solid var(--outline);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1438,12 +1438,12 @@ button[kind="tertiary"] {
 /* ── Form inputs ── */
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextInput"] input {
-    background: #F9F9F7 !important; border: 1px solid #E0E3DF !important;
+    background: var(--surface-container-lowest) !important; border: 1px solid var(--outline) !important;
     border-radius: 8px !important; font-weight: 700 !important;
     color: var(--text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    background: #F9F9F7 !important; border: 1px solid #E0E3DF !important;
+    background: var(--surface-container-lowest) !important; border: 1px solid var(--outline) !important;
     border-radius: 8px !important; font-weight: 700 !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
 }
@@ -1454,7 +1454,7 @@ div[data-testid="stFileUploader"] label {
     font-family: 'Manrope', sans-serif !important;
     font-size: 12px !important; font-weight: 900 !important;
     text-transform: uppercase !important; letter-spacing: 0.13em !important;
-    color: #223129 !important;
+    color: var(--text) !important;
 }
 div[data-testid="stFileUploader"] section {
     background: var(--surface-container) !important; border: 2px dashed var(--outline) !important;
@@ -1470,7 +1470,7 @@ div[data-testid="stColumn"]:has(#mrk-chem),
 div[data-testid="stColumn"]:has(#mrk-env),
 div[data-testid="stColumn"]:has(#mrk-hist),
 div[data-testid="stColumn"]:has(#mrk-det) {
-    background: #E5E4E0 !important;
+    background: var(--surface-container-high) !important;
     border-radius: 0.75rem !important;
     border: 1px solid rgba(192,201,191,0.3) !important;
     box-shadow: 0 2px 8px rgba(27,28,26,0.06) !important;

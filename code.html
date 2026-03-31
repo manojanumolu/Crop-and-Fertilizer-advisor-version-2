@@ -81,6 +81,47 @@
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
         }
+    /* Dark mode visibility pass: only active when html has .dark */
+    html.dark body {
+      background: #111915;
+      color: #e8f3e8;
+    }
+    html.dark [class~="bg-surface-container-lowest"] { background-color: #18211c !important; }
+    html.dark [class~="bg-surface-container-low"] { background-color: #1d2721 !important; }
+    html.dark [class~="bg-surface-container"] { background-color: #202b24 !important; }
+    html.dark [class~="bg-surface-container-high"] { background-color: #253129 !important; }
+    html.dark [class~="bg-surface-container-highest"] { background-color: #2b3830 !important; }
+    html.dark [class~="text-on-surface"] { color: #e8f3e8 !important; }
+    html.dark [class~="text-on-surface-variant"] { color: #b9c9bd !important; }
+    html.dark [class~="text-primary"] { color: #96d7aa !important; }
+    html.dark [class~="text-secondary"] { color: #a8e8b8 !important; }
+    html.dark [class~="border-outline-variant/10"],
+    html.dark [class~="border-outline-variant/20"],
+    html.dark [class~="border-outline-variant/30"],
+    html.dark [class~="border-outline-variant/40"] {
+      border-color: rgba(192, 201, 191, 0.25) !important;
+    }
+    html.dark [class*="text-blue-900"],
+    html.dark [class*="text-blue-800"],
+    html.dark [class*="text-blue-700"],
+    html.dark [class*="text-blue-600"] {
+      color: #bfd9ff !important;
+    }
+    html.dark [class*="bg-blue-50"] { background-color: rgba(59, 130, 246, 0.12) !important; }
+    html.dark [class*="border-blue-100"] { border-color: rgba(147, 197, 253, 0.35) !important; }
+    html.dark .glass-panel {
+      background: rgba(16, 26, 20, 0.75);
+      border-color: rgba(191, 219, 254, 0.2);
+    }
+    html.dark input,
+    html.dark select,
+    html.dark textarea {
+      color: #e8f3e8;
+    }
+    html.dark input::placeholder,
+    html.dark textarea::placeholder {
+      color: #95a79a;
+    }
         /* Custom scrollbar for refined scientific look */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
