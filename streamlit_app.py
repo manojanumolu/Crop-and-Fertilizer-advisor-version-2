@@ -1165,8 +1165,8 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 .block-container button[data-testid="baseButton-primary"] {
     background: #2f7144 !important; color: #fff !important;
     border: none !important; border-radius: 0.75rem !important;
-    font-weight: 700 !important; font-family: 'Manrope',sans-serif !important;
-    font-size: 1rem !important; height: 3.25rem !important;
+    font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
+    font-size: 1.02rem !important; height: 3.25rem !important;
 }
 .main button[kind="primary"],
 .block-container button[kind="primary"] {
@@ -1180,41 +1180,19 @@ button[data-testid="collapsedControl"] { background: #214130 !important; color: 
 .block-container button[data-testid="baseButton-secondary"] {
     background: #ffffff !important; color: #404942 !important;
     border: 2px solid rgba(47,113,68,0.22) !important; border-radius: 0.75rem !important;
-    font-weight: 700 !important; font-family: 'Manrope',sans-serif !important;
-    font-size: 0.9rem !important; height: 3.25rem !important;
-}
-.main button[kind="secondary"],
-.block-container button[kind="secondary"] {
-    border: 2px solid rgba(47,113,68,0.22) !important;
+    font-weight: 800 !important; font-family: 'Manrope',sans-serif !important;
+    font-size: 0.95rem !important; height: 3.25rem !important;
 }
 
-/* ── Topbar theme toggle ── */
-div[data-testid="stButton"]:has(button[title="Toggle theme"]) {
-    position: fixed !important;
-    top: 14px !important;
-    right: 96px !important;
-    z-index: 1001 !important;
-    width: 34px !important;
-    height: 34px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-button[title="Toggle theme"] {
-    width: 34px !important;
-    height: 34px !important;
-    border-radius: 999px !important;
-    border: none !important;
-    background: rgba(227,226,223,0.9) !important;
-    color: #1e5c3a !important;
-    font-family: 'Material Symbols Outlined' !important;
-    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-}
-button[title="Toggle theme"]:hover {
-    background: rgba(227,226,223,1) !important;
+/* ── Compact top controls ── */
+.top-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: rgba(227,226,223,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ── Form inputs ── */
@@ -1321,35 +1299,41 @@ with st.sidebar:
 """, unsafe_allow_html=True)
 
 # ── TOP APP BAR ───────────────────────────────────────────────────
-st.markdown("""
-<div style="background:rgba(242,239,232,0.92);backdrop-filter:blur(20px);
-     -webkit-backdrop-filter:blur(20px);padding:0.875rem 0;
-     border-bottom:1px solid rgba(192,201,191,0.25);
-     display:flex;justify-content:space-between;align-items:center;
-     margin-bottom:2rem">
-  <div style="display:flex;flex-direction:column">
-    <h2 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:700;
-        color:#1e5c3a;margin:0">Agricultural Intelligence</h2>
-    <span style="height:2px;width:56px;background:rgba(47,113,68,0.6);
-        margin-top:4px;border-radius:999px"></span>
-  </div>
-  <div style="display:flex;gap:2px">
-    <div style="width:34px;height:34px;border-radius:50%;display:flex;
-         align-items:center;justify-content:center">
-      <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">settings</span>
-    </div>
-    <div style="width:34px;height:34px;border-radius:50%;display:flex;
-         align-items:center;justify-content:center">
-      <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">notifications</span>
-    </div>
-  </div>
+st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+top_l, top_t, top_s, top_n = st.columns([14, 1, 1, 1])
+
+with top_l:
+        st.markdown("""
+<div style="padding:0.35rem 0 0.65rem;border-bottom:1px solid rgba(192,201,191,0.25)">
+    <h2 style="font-family:Manrope,sans-serif;font-size:1.2rem;font-weight:800;
+            color:#1e5c3a;margin:0">Agricultural Intelligence</h2>
+    <span style="display:block;height:2px;width:56px;background:rgba(47,113,68,0.6);
+            margin-top:6px;border-radius:999px"></span>
 </div>
 """, unsafe_allow_html=True)
 
-_theme_icon = "light_mode" if st.session_state.theme == "dark" else "dark_mode"
-if st.button(_theme_icon, key="theme_toggle", help="Toggle theme", type="secondary"):
-    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-    st.rerun()
+with top_t:
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        _theme_icon = "light_mode" if st.session_state.theme == "dark" else "dark_mode"
+        if st.button(_theme_icon, key="theme_toggle", help="Toggle theme"):
+                st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+                st.rerun()
+
+with top_s:
+        st.markdown('''
+<div style="height:8px"></div>
+<div class="top-icon-btn">
+    <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">settings</span>
+</div>
+''', unsafe_allow_html=True)
+
+with top_n:
+        st.markdown('''
+<div style="height:8px"></div>
+<div class="top-icon-btn">
+    <span class="material-symbols-outlined" style="color:#1e5c3a;font-size:20px">notifications</span>
+</div>
+''', unsafe_allow_html=True)
 
 # ── HERO HEADER ───────────────────────────────────────────────────
 hero_l, hero_r = st.columns([3, 1])
@@ -1478,10 +1462,10 @@ st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 (env_col,) = st.columns(1)
 with env_col:
     st.markdown('<span id="mrk-env"></span>', unsafe_allow_html=True)
-    st.markdown("""
-<h3 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:800;
-    color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
-  <span class="material-symbols-outlined" style="color:#004425;font-size:1.375rem">public</span>
+        st.markdown("""
+<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
+        color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1.125rem">
+    <span class="material-symbols-outlined" style="color:#004425;font-size:1.5rem;font-variation-settings:'FILL' 1, 'wght' 600">public</span>
   Auto-Fill Climate Data
 </h3>
 """, unsafe_allow_html=True)
@@ -1507,7 +1491,7 @@ with env_col:
         village = st.text_input("Enter Village / Town Name", placeholder="e.g. Ramtek")
     with ec4:
         st.markdown("<div style='height:22px'></div>", unsafe_allow_html=True)
-        fetch_btn = st.button("Fetch Local Data", type="primary", use_container_width=True)
+        fetch_btn = st.button("☀ Fetch Local Data", type="primary", use_container_width=True)
 
     if fetch_btn:
         if sel_state == "-- Select State --":
@@ -1579,7 +1563,7 @@ col_hist, col_det = st.columns(2, gap="large")
 with col_hist:
     st.markdown('<span id="mrk-hist"></span>', unsafe_allow_html=True)
     st.markdown("""
-<h3 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:800;
+<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
     color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   &#128202; Farm History
 </h3>
@@ -1601,7 +1585,7 @@ with col_hist:
 with col_det:
     st.markdown('<span id="mrk-det"></span>', unsafe_allow_html=True)
     st.markdown("""
-<h3 style="font-family:Manrope,sans-serif;font-size:1.125rem;font-weight:800;
+<h3 style="font-family:Manrope,sans-serif;font-size:2rem;font-weight:900;
     color:#1b1c1a;display:flex;align-items:center;gap:8px;margin:0 0 1rem">
   &#127806; Farm Details
 </h3>
@@ -1632,11 +1616,11 @@ st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 btn_l, btn_r = st.columns([3, 2], gap="large")
 with btn_l:
     analyze_clicked = st.button(
-        "Analyze Soil & Predict Crop", type="primary", use_container_width=True
+        "📊 Analyze Soil & Predict Crop", type="primary", use_container_width=True
     )
 with btn_r:
     st.button(
-        "Auto-Suggest Levels from Image", type="secondary", use_container_width=True
+        "✨ Auto-Suggest Levels from Image", type="secondary", use_container_width=True
     )
 
 st.markdown("<div style='height:3.5rem'></div>", unsafe_allow_html=True)
