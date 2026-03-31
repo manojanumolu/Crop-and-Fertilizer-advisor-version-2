@@ -2025,7 +2025,7 @@ if st.session_state.last_result:
     with res_side:
         if len(crop_recs) > 1:
             c2    = crop_recs[1]
-                        img2 = CROP_IMAGE_MAP.get(c2["name"], "https://source.unsplash.com/160x160/?crop,plant")
+            img2 = CROP_IMAGE_MAP.get(c2["name"], "https://source.unsplash.com/160x160/?crop,plant")
             st.markdown(f"""
 <div style="background:#f0f9ff;border-radius:1rem;padding:1.125rem;
      border:1px solid #bae6fd;display:flex;gap:0.875rem;margin-bottom:0.875rem">
@@ -2051,7 +2051,7 @@ if st.session_state.last_result:
 
         if len(crop_recs) > 2:
             c3    = crop_recs[2]
-                        img3 = CROP_IMAGE_MAP.get(c3["name"], "https://source.unsplash.com/160x160/?farm,crop")
+            img3 = CROP_IMAGE_MAP.get(c3["name"], "https://source.unsplash.com/160x160/?farm,crop")
             st.markdown(f"""
 <div style="background:#f0fdf4;border-radius:1rem;padding:1.125rem;
      border:1px solid #bbf7d0;display:flex;gap:0.875rem;margin-bottom:0.875rem">
