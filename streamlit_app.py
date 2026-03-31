@@ -1905,8 +1905,9 @@ if st.session_state.last_result:
             st.session_state.last_result, _sd, st.session_state.img_bytes
         )
     except Exception as _exp:
+        import traceback
         report_png_bytes, report_pdf_bytes = None, None
-        st.session_state["_export_err"] = str(_exp)
+        st.session_state["_export_err"] = traceback.format_exc()
 
 hdr_t, hdr_p, hdr_s = st.columns([12, 1, 1], gap="small")
 with hdr_t:
@@ -1940,6 +1941,9 @@ with hdr_s:
         use_container_width=True,
         disabled=report_png_bytes is None,
     )
+
+if st.session_state.get("_export_err"):
+    st.error(f"Export error: {st.session_state['_export_err']}")
 
 if not analyze_clicked and not st.session_state.last_result and not st.session_state.last_error:
     st.markdown("""
