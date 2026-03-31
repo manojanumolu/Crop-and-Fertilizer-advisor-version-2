@@ -1203,8 +1203,8 @@ def build_result_exports(result_data, season_name, img_bytes=None):
             canvas.paste(src, (panel_x1, panel_y1))
         except Exception:
             pass
-    # Soil label overlay
-    draw.rectangle((panel_x1, panel_y2 - 32, panel_x2, panel_y2), fill=(0, 0, 0, 160))
+    # Soil label overlay (RGB only — no alpha)
+    draw.rectangle((panel_x1, panel_y2 - 32, panel_x2, panel_y2), fill=(30, 30, 30))
     draw.text((panel_x1 + 10, panel_y2 - 26), soil_name, fill=(255, 255, 255), font=lbl_f)
 
     # Right info block
@@ -2021,13 +2021,8 @@ if st.session_state.last_result:
      box-shadow:0 2px 10px rgba(0,0,0,0.08);border:1px solid rgba(192,201,191,0.2);
      display:flex;min-height:280px">
   <div style="width:38%;background:{soil_col};display:flex;align-items:center;
-       justify-content:center;min-height:240px;position:relative;flex-shrink:0;
-       flex-direction:column;gap:8px">
+       justify-content:center;min-height:240px;flex-shrink:0;flex-direction:column;gap:8px">
     <span style="font-size:5rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3))">{top_emoji}</span>
-    <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center">
-      <span style="background:rgba(0,0,0,0.3);color:white;font-size:10px;font-weight:900;
-          padding:2px 8px;border-radius:999px;letter-spacing:0.06em">{soil_name}</span>
-    </div>
   </div>
   <div style="padding:1.5rem;display:flex;flex-direction:column;
        justify-content:space-between;flex:1;min-width:0">
