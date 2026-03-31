@@ -1164,55 +1164,104 @@ def _load_font(size=18, bold=False):
 
 
 def build_result_exports(result_data, season_name, img_bytes=None):
-    canvas = Image.new("RGB", (1400, 900), (245, 244, 240))
+    W, H = 1400, 960
+    canvas = Image.new("RGB", (W, H), (245, 244, 240))
     draw = ImageDraw.Draw(canvas)
 
-    title_f = _load_font(46, bold=True)
-    h_f = _load_font(34, bold=True)
-    b_f = _load_font(24, bold=True)
-    t_f = _load_font(22, bold=False)
-    s_f = _load_font(18, bold=False)
+    title_f = _load_font(40, bold=True)
+    h_f     = _load_font(32, bold=True)
+    b_f     = _load_font(22, bold=True)
+    t_f     = _load_font(20, bold=False)
+    s_f     = _load_font(16, bold=False)
+    lbl_f   = _load_font(14, bold=True)
 
-    soil_name = result_data.get("soil_name", "Unknown")
+    soil_name  = result_data.get("soil_name", "Unknown")
     confidence = float(result_data.get("confidence", 0))
-    recs = result_data.get("crop_recs", [])
-    top = recs[0] if recs else {"name": "N/A", "fertilizer": "N/A", "npk": "N/A"}
+    recs       = result_data.get("crop_recs", [])
+    soil_fert  = result_data.get("soil_fert", {})
+    all_probs  = result_data.get("all_probs", {})
+    top        = recs[0] if recs else {"name": "N/A", "fertilizer": "N/A", "npk": "N/A"}
 
-    draw.text((52, 36), "Result Analysis and Recommendations", fill=(0, 68, 37), font=title_f)
-    draw.rounded_rectangle((45, 120, 1355, 855), radius=24, fill=(255, 255, 255), outline=(216, 220, 214), width=2)
+    # Header bar
+    draw.rectangle((0, 0, W, 80), fill=(0, 68, 37))
+    draw.text((40, 20), "Soil & Crop Recommendation Report", fill=(255, 255, 255), font=title_f)
+    ts = datetime.now().strftime("%Y-%m-%d  %H:%M")
+    draw.text((W - 260, 30), ts, fill=(172, 243, 186), font=s_f)
 
+    # Main white card
+    draw.rounded_rectangle((30, 95, W - 30, H - 30), radius=20,
+                            fill=(255, 255, 255), outline=(216, 220, 214), width=1)
+
+    # Soil image panel
+    panel_x1, panel_y1, panel_x2, panel_y2 = 55, 115, 430, 540
+    draw.rounded_rectangle((panel_x1, panel_y1, panel_x2, panel_y2),
+                            radius=12, fill=(220, 224, 220))
     if img_bytes:
         try:
             src = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            src.thumbnail((420, 420))
-            x = 75 + (420 - src.width) // 2
-            y = 220 + (420 - src.height) // 2
-            draw.rounded_rectangle((70, 210, 500, 640), radius=16, fill=(232, 236, 232))
-            canvas.paste(src, (x, y))
+            src = src.resize((panel_x2 - panel_x1, panel_y2 - panel_y1), Image.LANCZOS)
+            canvas.paste(src, (panel_x1, panel_y1))
         except Exception:
-            draw.rounded_rectangle((70, 210, 500, 640), radius=16, fill=(232, 236, 232))
-    else:
-        draw.rounded_rectangle((70, 210, 500, 640), radius=16, fill=(232, 236, 232))
+            pass
+    # Soil label overlay
+    draw.rectangle((panel_x1, panel_y2 - 32, panel_x2, panel_y2), fill=(0, 0, 0, 160))
+    draw.text((panel_x1 + 10, panel_y2 - 26), soil_name, fill=(255, 255, 255), font=lbl_f)
 
-    draw.text((540, 190), f"Top Crop: {top['name']}", fill=(22, 28, 26), font=h_f)
-    draw.text((540, 255), f"Confidence: {confidence:.0f}%", fill=(0, 68, 37), font=b_f)
-    draw.text((540, 310), f"Detected Soil: {soil_name}", fill=(22, 28, 26), font=b_f)
-    draw.text((540, 365), f"Season: {season_name}", fill=(64, 73, 66), font=t_f)
+    # Right info block
+    rx = 460
+    draw.text((rx, 120), f"Top Recommended Crop", fill=(64, 73, 66), font=lbl_f)
+    draw.text((rx, 148), top["name"], fill=(0, 68, 37), font=h_f)
+    draw.text((rx, 200), f"AI Confidence:  {confidence:.1f}%", fill=(30, 92, 58), font=b_f)
+    draw.text((rx, 242), f"Detected Soil:  {soil_name}", fill=(22, 28, 26), font=b_f)
+    draw.text((rx, 282), f"Season:         {season_name}", fill=(64, 73, 66), font=t_f)
 
-    draw.rounded_rectangle((540, 430, 1310, 635), radius=14, fill=(239, 238, 234), outline=(214, 218, 212), width=1)
-    draw.text((570, 465), "Scientific Fertilizer Recommendation", fill=(22, 28, 26), font=b_f)
-    draw.text((570, 525), f"Recommended Type: {top['fertilizer']}", fill=(64, 73, 66), font=t_f)
-    draw.text((570, 570), f"Ratio (N:P:K): {top['npk']}", fill=(64, 73, 66), font=t_f)
+    # Fertilizer box
+    draw.rounded_rectangle((rx, 320, W - 55, 460),
+                            radius=10, fill=(239, 238, 234), outline=(210, 215, 210), width=1)
+    draw.text((rx + 20, 336), "FERTILIZER RECOMMENDATION", fill=(0, 68, 37), font=lbl_f)
+    draw.text((rx + 20, 364), f"Type:   {top['fertilizer']}", fill=(22, 28, 26), font=b_f)
+    draw.text((rx + 20, 402), f"N:P:K:  {top['npk']}", fill=(64, 73, 66), font=t_f)
+    sf_text = f"Soil fertilizer: {soil_fert.get('fertilizer','N/A')}   ({soil_fert.get('npk','N/A')})"
+    draw.text((rx + 20, 434), sf_text, fill=(100, 110, 102), font=s_f)
 
-    ts = datetime.now().strftime("Generated on %Y-%m-%d %H:%M")
-    draw.text((55, 865), ts, fill=(110, 120, 112), font=s_f)
+    # All crops list
+    cy = 560
+    draw.text((55, cy - 28), "All Crop Recommendations:", fill=(22, 28, 26), font=b_f)
+    for i, cr in enumerate(recs):
+        x = 55 + i * 300
+        draw.rounded_rectangle((x, cy, x + 278, cy + 80),
+                                radius=8, fill=(245, 248, 245), outline=(210, 216, 210), width=1)
+        draw.text((x + 12, cy + 10), f"Rank #{cr['rank']}", fill=(0, 68, 37), font=lbl_f)
+        draw.text((x + 12, cy + 32), cr["name"], fill=(22, 28, 26), font=b_f)
+        draw.text((x + 12, cy + 60), cr["fertilizer"], fill=(64, 73, 66), font=s_f)
+
+    # Probability bars
+    by = 680
+    draw.text((55, by - 28), "Soil Probability Breakdown:", fill=(22, 28, 26), font=b_f)
+    bar_w = W - 110
+    sorted_probs = sorted(all_probs.items(), key=lambda x: x[1], reverse=True)
+    for j, (sname, pct) in enumerate(sorted_probs):
+        yy = by + j * 38
+        draw.text((55, yy + 4), f"{sname:<20}", fill=(64, 73, 66), font=s_f)
+        fill_w = int((pct / 100) * (bar_w - 220))
+        draw.rounded_rectangle((270, yy, 270 + bar_w - 220, yy + 20),
+                                radius=4, fill=(220, 224, 220))
+        if fill_w > 0:
+            draw.rounded_rectangle((270, yy, 270 + fill_w, yy + 20),
+                                    radius=4, fill=(0, 68, 37))
+        draw.text((270 + bar_w - 215, yy + 2), f"{pct:.1f}%", fill=(22, 28, 26), font=s_f)
+
+    # Footer
+    draw.rectangle((0, H - 28, W, H), fill=(0, 68, 37))
+    draw.text((40, H - 22), "Multimodal Soil & Crop Recommendation System  |  Accuracy: 98.67%",
+              fill=(172, 243, 186), font=s_f)
 
     png_buf = io.BytesIO()
     canvas.save(png_buf, format="PNG")
     png_bytes = png_buf.getvalue()
 
     pdf_buf = io.BytesIO()
-    canvas.save(pdf_buf, format="PDF")
+    canvas.save(pdf_buf, format="PDF", resolution=150)
     pdf_bytes = pdf_buf.getvalue()
     return png_bytes, pdf_bytes
 
@@ -1844,15 +1893,20 @@ analyze_clicked = st.button(
 st.markdown("<div style='height:3.5rem'></div>", unsafe_allow_html=True)
 
 # ── RESULTS SECTION ───────────────────────────────────────────────
+if analyze_clicked or st.session_state.last_result:
+    st.session_state["_season_disp"] = season_disp
+
 report_png_bytes = None
 report_pdf_bytes = None
 if st.session_state.last_result:
-        try:
-                report_png_bytes, report_pdf_bytes = build_result_exports(
-                        st.session_state.last_result, season_disp, st.session_state.img_bytes
-                )
-        except Exception:
-                report_png_bytes, report_pdf_bytes = None, None
+    try:
+        _sd = st.session_state.get("_season_disp", season_disp)
+        report_png_bytes, report_pdf_bytes = build_result_exports(
+            st.session_state.last_result, _sd, st.session_state.img_bytes
+        )
+    except Exception as _exp:
+        report_png_bytes, report_pdf_bytes = None, None
+        st.session_state["_export_err"] = str(_exp)
 
 hdr_t, hdr_p, hdr_s = st.columns([12, 1, 1], gap="small")
 with hdr_t:
@@ -1865,27 +1919,27 @@ with hdr_t:
 </div>
 """, unsafe_allow_html=True)
 with hdr_p:
-        st.download_button(
-                "📄",
-                data=report_pdf_bytes if report_pdf_bytes else b"",
-                file_name=f"crop_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                mime="application/pdf",
-                key="download_report_pdf",
-                help="Download PDF report",
-                use_container_width=True,
-                disabled=report_pdf_bytes is None,
-        )
+    st.download_button(
+        "📄 PDF",
+        data=report_pdf_bytes if report_pdf_bytes else b"no_result",
+        file_name=f"crop_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+        mime="application/pdf",
+        key="download_report_pdf",
+        help="Download PDF report",
+        use_container_width=True,
+        disabled=report_pdf_bytes is None,
+    )
 with hdr_s:
-        st.download_button(
-                "💾",
-                data=report_png_bytes if report_png_bytes else b"",
-                file_name=f"crop_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
-                mime="image/png",
-                key="download_report_png",
-                help="Save report image",
-                use_container_width=True,
-                disabled=report_png_bytes is None,
-        )
+    st.download_button(
+        "🖼 PNG",
+        data=report_png_bytes if report_png_bytes else b"no_result",
+        file_name=f"crop_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
+        mime="image/png",
+        key="download_report_png",
+        help="Save report image",
+        use_container_width=True,
+        disabled=report_png_bytes is None,
+    )
 
 if not analyze_clicked and not st.session_state.last_result and not st.session_state.last_error:
     st.markdown("""
@@ -1935,15 +1989,45 @@ if st.session_state.last_result:
     crop_recs  = res["crop_recs"]
 
     CROP_IMAGE_MAP = {
-        "Cotton": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Gossypium_hirsutum_%28cotton%29_plant.jpg/640px-Gossypium_hirsutum_%28cotton%29_plant.jpg",
-        "Sorghum": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Sorghum_bicolor03.jpg/640px-Sorghum_bicolor03.jpg",
-        "Soybean": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Soybean.USDA.jpg/640px-Soybean.USDA.jpg",
-        "Maize": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Corncobs.jpg/640px-Corncobs.jpg",
-        "Rice": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Rice_paddy.jpg/640px-Rice_paddy.jpg",
-        "Wheat": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Trigo.jpg/640px-Trigo.jpg",
-        "Sugarcane": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Sugarcane_field.jpg/640px-Sugarcane_field.jpg",
-        "Potato": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Potato_harvest.jpg/640px-Potato_harvest.jpg",
-        "Tomato": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Bright_red_tomato_and_cross_section02.jpg/640px-Bright_red_tomato_and_cross_section02.jpg",
+        "Cotton":       "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Gossypium_hirsutum_%28cotton%29_plant.jpg/480px-Gossypium_hirsutum_%28cotton%29_plant.jpg",
+        "Maize":        "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Corncobs.jpg/480px-Corncobs.jpg",
+        "Rice":         "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Rice_paddy.jpg/480px-Rice_paddy.jpg",
+        "Wheat":        "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Trigo.jpg/480px-Trigo.jpg",
+        "Sugarcane":    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Sugarcane_field.jpg/480px-Sugarcane_field.jpg",
+        "Potato":       "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Patates.jpg/480px-Patates.jpg",
+        "Tomato":       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Bright_red_tomato_and_cross_section02.jpg/480px-Bright_red_tomato_and_cross_section02.jpg",
+        "Sorghum":      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Sorghum_bicolor03.jpg/480px-Sorghum_bicolor03.jpg",
+        "Soybean":      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Soybean.USDA.jpg/480px-Soybean.USDA.jpg",
+        "Groundnut":    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Peanuts_of_arachis_hypogaea.jpg/480px-Peanuts_of_arachis_hypogaea.jpg",
+        "Sunflower":    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/A_sunflower.jpg/480px-A_sunflower.jpg",
+        "Mustard":      "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Brassica_napus_flowering.jpg/480px-Brassica_napus_flowering.jpg",
+        "Barley":       "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Barley_field.jpg/480px-Barley_field.jpg",
+        "Peas":         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Peas_in_pods_-_Studio.jpg/480px-Peas_in_pods_-_Studio.jpg",
+        "Chickpea":     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Chickpeas.jpg/480px-Chickpeas.jpg",
+        "Linseed":      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Linum_usitatissimum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-266.jpg/480px-Linum_usitatissimum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-266.jpg",
+        "Watermelon":   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Watermelon_closeup.jpg/480px-Watermelon_closeup.jpg",
+        "Cucumber":     "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/A_small_cup_of_coffee.JPG/480px-A_small_cup_of_coffee.JPG",
+        "Bitter Gourd": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Bittergourd.jpg/480px-Bittergourd.jpg",
+        "Moong":        "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Mung_bean_sprouts_closeup.jpg/480px-Mung_bean_sprouts_closeup.jpg",
+        "Muskmelon":    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Musk_melon.jpg/480px-Musk_melon.jpg",
+        "Jute":         "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Corchorus_capsularis.jpg/480px-Corchorus_capsularis.jpg",
+        "Safflower":    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Carthamus_tinctorius_-_Safflower.jpg/480px-Carthamus_tinctorius_-_Safflower.jpg",
+        "Sesame":       "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Sesamum_indicum.jpg/480px-Sesamum_indicum.jpg",
+        "Taro":         "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Colocasia_esculenta.jpg/480px-Colocasia_esculenta.jpg",
+        "Spinach":      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Spinach_leaves.jpg/480px-Spinach_leaves.jpg",
+        "Pumpkin":      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Pumpkins.jpg/480px-Pumpkins.jpg",
+        "Cashew":       "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Cashew_on_tree.jpg/480px-Cashew_on_tree.jpg",
+        "Rubber":       "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rubber_tree.jpg/480px-Rubber_tree.jpg",
+        "Tea":          "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Tea_leaves_2_%28cropped%29.jpg/480px-Tea_leaves_2_%28cropped%29.jpg",
+        "Coffee":       "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Roasted_coffee_beans.jpg/480px-Roasted_coffee_beans.jpg",
+        "Tapioca":      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Cassava.jpg/480px-Cassava.jpg",
+        "Turmeric":     "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Turmeric_rhizomes_and_powder.jpg/480px-Turmeric_rhizomes_and_powder.jpg",
+        "Ginger":       "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ginger_roots.jpg/480px-Ginger_roots.jpg",
+        "Mango":        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Hapus_Mango.jpg/480px-Hapus_Mango.jpg",
+        "Pineapple":    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pineapple_and_cross_section.jpg/480px-Pineapple_and_cross_section.jpg",
+        "Jackfruit":    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Jackfruit_hanging.jpg/480px-Jackfruit_hanging.jpg",
+        "Banana":       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Platano.jpg/480px-Banana-Platano.jpg",
+        "Cucumber":     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Cucumbers.jpg/480px-Cucumbers.jpg",
     }
     SOIL_COLORS = {
         "Red Soil": "#C62828", "Black Soil": "#37474F", "Alluvial Soil": "#6D4C41",
