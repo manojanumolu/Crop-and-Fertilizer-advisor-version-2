@@ -366,23 +366,32 @@ def predict():
 
         # ── Model inference ──
         with torch.no_grad():
+            img_logits_raw = img_model(img_t, return_features=False)
             img_feat       = img_model(img_t, return_features=True)
             tab_feat       = tab_projector(tab_t)
             logits, _      = fusion_model(img_feat, tab_feat)
 
+        img_probs    = torch.softmax(img_logits_raw, dim=-1)[0].cpu().numpy()
         fusion_probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()  # (6,)
+        img_conf     = float(img_probs.max())  # raw image confidence
 
-        # ── Calibrated ensemble (fusion + XGBoost) ──────────────────
-        # XGBoost uses soil chemistry (NPK, pH) and is more reliable for
-        # visually similar soils like Red vs Yellow. We blend the two
-        # probability distributions, giving XGBoost extra weight when the
-        # fusion model is uncertain (top-2 gap < 0.20).
-        xgb_p   = xgb_probs[0]                     # (6,) already probabilities
-        top2    = np.partition(fusion_probs, -2)[-2:]
-        gap     = float(top2[-1] - top2[-2])        # confidence margin
-        # When the model is unsure (gap < 0.20), lean more on tabular signal
-        xgb_w   = 0.45 if gap < 0.20 else 0.30
-        blended = (1 - xgb_w) * fusion_probs + xgb_w * xgb_p
+        # ── Anchored ensemble: image is primary, tabular is secondary ──
+        # High image confidence → image dominates; tabular only shifts crop
+        # Low image confidence → allow more tabular influence
+        xgb_p = xgb_probs[0]
+        top2  = np.partition(fusion_probs, -2)[-2:]
+        gap   = float(top2[-1] - top2[-2])
+
+        if img_conf >= 0.70:
+            # Image very confident: 80% image + 15% fusion + 5% tabular
+            blended = 0.80 * img_probs + 0.15 * fusion_probs + 0.05 * xgb_p
+        elif img_conf >= 0.50:
+            # Image moderately confident: 50% image + 35% fusion + 15% tabular
+            blended = 0.50 * img_probs + 0.35 * fusion_probs + 0.15 * xgb_p
+        else:
+            # Image uncertain: rely more on fusion+tabular
+            xgb_w   = 0.35 if gap < 0.20 else 0.25
+            blended = (1 - xgb_w) * fusion_probs + xgb_w * xgb_p
 
         # Extra nudge: penalise Red↔Yellow confusion using pH + color proxy.
         # Yellow soils are typically more acidic (pH 5.0–6.5) and have lower
