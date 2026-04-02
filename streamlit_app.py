@@ -2,7 +2,7 @@
 # ResNet-50 + XGBoost + TSACA Fusion + GRN  |  Accuracy: 98.67%
 # Run: streamlit run streamlit_app.py
 
-import io, os, json, pickle
+import io, os, json, pickle, re
 from datetime import datetime
 import requests
 import numpy as np, pandas as pd
@@ -313,6 +313,9 @@ REGION_MAP = {"Central": 0, "East": 1, "North": 2, "South": 3, "West": 4}
 DATASET_N_RANGE = (20.0, 187.0)
 DATASET_P_RANGE = (10.0, 101.0)
 DATASET_K_RANGE = (10.0, 113.0)
+IDEAL_N_RANGE = (60.0, 140.0)
+IDEAL_P_RANGE = (25.0, 80.0)
+IDEAL_K_RANGE = (35.0, 120.0)
 
 SOIL_FERT_MAP = {
     "Alluvial Soil": {"fertilizer": "NPK 20:20:0 + Zinc",  "npk": "N:P:K = 80:40:20 kg/ha"},
@@ -408,9 +411,11 @@ def _crop_suitability_score(crop, n, p, k, ph, temp, hum, rain, yld, fert, irrig
 
     if irrig in prof.get("irrig", []):
         score += 0.45
+    else:
+        score -= 0.25
 
     if prev == crop:
-        score -= 0.35
+        score -= 0.9
 
     if crop in {"Cotton", "Sugarcane"} and region in {"South", "West"}:
         score += 0.1
@@ -420,6 +425,49 @@ def _crop_suitability_score(crop, n, p, k, ph, temp, hum, rain, yld, fert, irrig
         score += 0.1
 
     return score
+
+
+def _parse_npk_triplet(npk_text):
+    nums = [int(x) for x in re.findall(r"\d+", str(npk_text))]
+    if len(nums) >= 3:
+        return nums[0], nums[1], nums[2]
+    return 60, 40, 20
+
+
+def _adjust_component(base_dose, soil_val, ideal_lo, ideal_hi):
+    if soil_val < ideal_lo:
+        gap_ratio = min((ideal_lo - soil_val) / max(ideal_lo, 1.0), 1.0)
+        return int(round(base_dose * (1.0 + 0.6 * gap_ratio)))
+    if soil_val > ideal_hi:
+        excess_ratio = min((soil_val - ideal_hi) / max(ideal_hi, 1.0), 1.0)
+        return int(round(base_dose * (1.0 - 0.45 * excess_ratio)))
+    return int(round(base_dose))
+
+
+def _fertilizer_for_crop(crop, n, p, k):
+    base = CROP_FERT_MAP.get(crop, {"fertilizer": "NPK 14:14:14", "npk": "60:40:20 kg/ha"})
+    b_n, b_p, b_k = _parse_npk_triplet(base.get("npk", "60:40:20"))
+
+    prof = CROP_PROFILES.get(crop, DEFAULT_CROP_PROFILE)
+    n_lo, n_hi = prof["n"]
+    p_lo, p_hi = prof["p"]
+    k_lo, k_hi = prof["k"]
+
+    r_n = _adjust_component(b_n, n, n_lo, n_hi)
+    r_p = _adjust_component(b_p, p, p_lo, p_hi)
+    r_k = _adjust_component(b_k, k, k_lo, k_hi)
+
+    n_def = max(0.0, (n_lo - n) / max(n_lo, 1.0))
+    p_def = max(0.0, (p_lo - p) / max(p_lo, 1.0))
+    k_def = max(0.0, (k_lo - k) / max(k_lo, 1.0))
+    biggest = max(("N", n_def), ("P", p_def), ("K", k_def), key=lambda x: x[1])
+    suffix = f" ({biggest[0]} boost)" if biggest[1] >= 0.12 else ""
+
+    return {
+        "fertilizer": f"{base['fertilizer']}{suffix}",
+        "npk": f"{r_n}:{r_p}:{r_k} kg/ha",
+        "ideal": f"Ideal N:{int(n_lo)}-{int(n_hi)} P:{int(p_lo)}-{int(p_hi)} K:{int(k_lo)}-{int(k_hi)}",
+    }
 
 
 # ══════════════════════════════════════════════════════════════
@@ -478,26 +526,44 @@ def run_inference(img_model, tab_proj, fusion, xgb_clf, scaler,
     soil_fert = SOIL_FERT_MAP.get(soil_name,
                 {"fertilizer": "NPK 14:14:14", "npk": "N:P:K = 60:30:30 kg/ha"})
 
-    crops_all = CROP_MAP.get(
-        (soil_name, season),
-        CROP_MAP.get((soil_name, "Kharif"), ["Wheat", "Rice", "Maize"]))
+    ranked_soils = sorted(
+        [(class_names[i], float(probs[i])) for i in range(len(class_names))],
+        key=lambda x: x[1],
+        reverse=True,
+    )
+    top_soils = ranked_soils[:3]
+
+    crop_soil_support = {}
+    for s_name, s_prob in top_soils:
+        seasonal = CROP_MAP.get((s_name, season), CROP_MAP.get((s_name, "Kharif"), []))
+        for crop in seasonal:
+            crop_soil_support[crop] = crop_soil_support.get(crop, 0.0) + s_prob
+
+    if not crop_soil_support:
+        fallback_crops = CROP_MAP.get((soil_name, season), ["Wheat", "Rice", "Maize"])
+        crop_soil_support = {c: 1.0 for c in fallback_crops}
 
     scored_crops = []
-    for crop in crops_all:
-        score = _crop_suitability_score(
+    for crop, soil_support in crop_soil_support.items():
+        suit = _crop_suitability_score(
             crop, n, p, k, ph, temp, hum, rain, yld, fert, irrig, prev, region
         )
-        scored_crops.append((crop, score))
+        score = (1.35 * suit) + (2.2 * soil_support)
+        scored_crops.append((crop, score, suit, soil_support))
     scored_crops.sort(key=lambda x: x[1], reverse=True)
 
     crop_recs = []
-    for i, (crop, score) in enumerate(scored_crops[:3]):
-        cf = CROP_FERT_MAP.get(crop, {"fertilizer": "NPK 14:14:14", "npk": "60:40:20 kg/ha"})
+    for i, (crop, score, suit, soil_support) in enumerate(scored_crops[:3]):
+        fert_plan = _fertilizer_for_crop(crop, n, p, k)
         crop_recs.append({"name": crop, "rank": i + 1, "stars": 5 - i,
-                           "fertilizer": cf["fertilizer"], "npk": cf["npk"],
-                           "score": round(float(score), 3)})
+                           "fertilizer": fert_plan["fertilizer"], "npk": fert_plan["npk"],
+                           "ideal": fert_plan["ideal"],
+                           "score": round(float(score), 3),
+                           "soil_support": round(float(soil_support), 4),
+                           "suitability": round(float(suit), 4)})
 
-    debug["crop_scores"] = {c: round(float(s), 3) for c, s in scored_crops}
+    debug["top_soils"] = {s: round(float(p), 4) for s, p in top_soils}
+    debug["crop_scores"] = {c: round(float(s), 3) for c, s, _, _ in scored_crops}
 
     return soil_name, confidence, all_probs, soil_fert, crop_recs, debug
 
@@ -1837,27 +1903,38 @@ with col_chem:
     with cr1:
         n = st.number_input(
             "Nitrogen (N) (mg/kg)",
-            DATASET_N_RANGE[0], DATASET_N_RANGE[1], 76.0,
+            DATASET_N_RANGE[0], DATASET_N_RANGE[1], 90.0,
             help="Dataset range: 20-187 mg/kg",
         )
-        st.markdown(_npk_bar(n, 80, 160, 200), unsafe_allow_html=True)
+        st.markdown(_npk_bar(n, IDEAL_N_RANGE[0], IDEAL_N_RANGE[1], DATASET_N_RANGE[1]), unsafe_allow_html=True)
+        st.caption("Ideal range: 60-140 mg/kg")
         st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
         k = st.number_input(
             "Potassium (K) (mg/kg)",
             DATASET_K_RANGE[0], DATASET_K_RANGE[1], 54.0,
             help="Dataset range: 10-113 mg/kg",
         )
-        st.markdown(_npk_bar(k, 40, 160, 200), unsafe_allow_html=True)
+        st.markdown(_npk_bar(k, IDEAL_K_RANGE[0], IDEAL_K_RANGE[1], DATASET_K_RANGE[1]), unsafe_allow_html=True)
+        st.caption("Ideal range: 35-120 mg/kg")
     with cr2:
         p = st.number_input(
             "Phosphorus (P) (mg/kg)",
             DATASET_P_RANGE[0], DATASET_P_RANGE[1], 39.0,
             help="Dataset range: 10-101 mg/kg",
         )
-        st.markdown(_npk_bar(p, 30, 100, 200), unsafe_allow_html=True)
+        st.markdown(_npk_bar(p, IDEAL_P_RANGE[0], IDEAL_P_RANGE[1], DATASET_P_RANGE[1]), unsafe_allow_html=True)
+        st.caption("Ideal range: 25-80 mg/kg")
         st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
         ph = st.number_input("Soil pH (ph)", 3.0, 10.0, 6.5, step=0.1, help="General suitable range: pH 6.0-7.5")
         st.markdown(_npk_bar(ph, 6.0, 7.5, 10.0), unsafe_allow_html=True)
+        st.caption("Ideal range: pH 6.0-7.5")
+
+    st.markdown(
+        "<p style='font-size:12px;color:var(--muted);margin:0.35rem 0 0'>"
+        "Ideal soil nutrient bands: N 60-140, P 25-80, K 35-120 (mg/kg)."
+        "</p>",
+        unsafe_allow_html=True,
+    )
 
 st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
 
@@ -2134,6 +2211,7 @@ if st.session_state.last_result:
 
     CROP_EMOJI_MAP = {
         "Cotton": "🌿", "Maize": "🌽", "Rice": "🌾", "Wheat": "🌾",
+        "Chilli": "🌶️",
         "Sugarcane": "🎋", "Potato": "🥔", "Tomato": "🍅", "Sorghum": "🌾",
         "Soybean": "🫘", "Groundnut": "🥜", "Sunflower": "🌻", "Mustard": "🌼",
         "Barley": "🌾", "Peas": "🫛", "Chickpea": "🫘", "Linseed": "🌱",
