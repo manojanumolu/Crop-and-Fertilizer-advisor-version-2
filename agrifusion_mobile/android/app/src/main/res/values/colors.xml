@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppColors.primaryDark used in Flutter splash_screen.dart gradient -->
+    <color name="splash_background">#FF004425</color>
+</resources>
