@@ -147,13 +147,28 @@ num_cls   = cfg["NUM_CLASSES"]
 tab_dim   = cfg["TAB_FEAT_DIM"]
 NUMERIC_COLS = cfg["NUMERIC_COLS"]
 
+
+def _load_fp16_state(path):
+    """Load state dict, converting fp16 weights to float32 for inference accuracy."""
+    state = torch.load(path, map_location="cpu", weights_only=True)
+    if isinstance(state, dict):
+        out = {}
+        for k, v in state.items():
+            if torch.is_tensor(v) and v.dtype == torch.float16:
+                out[k] = v.float()
+            else:
+                out[k] = v
+        return out
+    return state
+
+
 img_model = ResNet50Classifier(num_cls, img_dim)
 tab_proj  = TabProjector(tab_dim, xgb_dim)
 fusion    = FusionGRNModel(img_dim, xgb_dim, fused_dim, num_heads, num_cls)
 
-img_model.load_state_dict(torch.load(mpath("img_model.pt"),     map_location="cpu", weights_only=True))
-tab_proj.load_state_dict(torch.load(mpath("tab_projector.pt"), map_location="cpu", weights_only=True))
-fusion.load_state_dict(torch.load(mpath("fusion_model.pt"),    map_location="cpu", weights_only=True))
+img_model.load_state_dict(_load_fp16_state(mpath("img_model.pt")))
+tab_proj.load_state_dict(_load_fp16_state(mpath("tab_projector.pt")))
+fusion.load_state_dict(_load_fp16_state(mpath("fusion_model.pt")))
 
 xgb_clf = xgb.XGBClassifier()
 xgb_clf.load_model(mpath("xgb_model.json"))
@@ -162,55 +177,32 @@ with open(mpath("scaler.pkl"), "rb") as fh:
     scaler = pickle.load(fh)
 
 img_model.eval(); tab_proj.eval(); fusion.eval()
-print("Models loaded OK.")
 
-def is_soil_image(pil_img, img_model, transform):
-    """Rule-based validator + ResNet confidence."""
-    arr = np.array(pil_img.resize((200, 200)).convert("RGB")).astype(float)
-    r = arr[:, :, 0]; g = arr[:, :, 1]; b = arr[:, :, 2]
-    total = 200 * 200
+# ── Soil Validator — MobileNetV3 trained model ───────────────
+print("Loading soil validator...")
+from torchvision.models import mobilenet_v3_small
+soil_validator = mobilenet_v3_small(weights=None)
+soil_validator.classifier[3] = nn.Linear(1024, 2)
+soil_validator.load_state_dict(
+    torch.load(mpath("soil_validator.pt"), map_location="cpu")
+)
+soil_validator.eval()
 
-    cyan_pixels     = np.sum((b > 150) & (g > 150) & (r < 100)) / total
-    orange_neon     = np.sum((r > 220) & (g > 80) & (g < 170) & (b < 80)) / total
-    pink_neon       = np.sum((r > 200) & (b > 150) & (g < 100)) / total
-    bright_red_neon = np.sum((r > 220) & (g < 60) & (b < 60)) / total
-    if (cyan_pixels + orange_neon + pink_neon + bright_red_neon) > 0.02:
-        return False
+print("All models loaded OK.")
 
-    skin = np.sum(
-        (r > 160) & (g > 110) & (b > 90) & (r > g) & (g > b) &
-        ((r + g + b) / 3 > 120) & ((r + g + b) / 3 < 210) &
-        ((r - b) > 25) & ((r - b) < 120)
-    ) / total
-    if skin > 0.30:
-        return False
-
-    if np.sum((b > r + 40) & (b > g + 30) & (b > 110)) / total > 0.22:
-        return False
-    if np.sum((g > r + 35) & (g > b + 35) & (g > 90)) / total > 0.22:
-        return False
-
-    if arr.mean() > 195:
-        return False
-
-    h_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=1)).mean()
-    v_diff = np.abs(np.diff(arr[:, :, 0].astype(float), axis=0)).mean()
-    if (h_diff + v_diff) / 2 > 28:
-        return False
-
-    img_t = transform(pil_img).unsqueeze(0)
+def is_soil_image(pil_img):
+    """Validate soil image using trained MobileNetV3 soil_validator.pt model."""
+    tf = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
+    img_t = tf(pil_img).unsqueeze(0)
     with torch.no_grad():
-        out   = img_model(img_t, return_features=False)
-        probs = torch.softmax(out, dim=-1)[0]
-    maxp = probs.max().item() * 100
-    top2 = torch.topk(probs, 2).values
-    gap  = (top2[0] - top2[1]).item()
-    if maxp < 35.0:
-        return False
-    if maxp < 45.0 and gap < 0.08:
-        return False
-
-    return True
+        out = soil_validator(img_t)
+        prob = torch.softmax(out, dim=-1)[0]
+    soil_prob = prob[1].item()
+    return soil_prob > 0.60
 
 # ── Lookup maps ────────────────────────────────────────────────
 SEASON_MAP = {"Kharif": 0, "Rabi": 1, "Zaid": 2}
@@ -302,7 +294,7 @@ def predict():
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
         pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        if not is_soil_image(pil_img, img_model, tf):
+        if not is_soil_image(pil_img):
             return jsonify({
                 "error": "No soil detected. Please upload a clear soil photo."
             }), 400
